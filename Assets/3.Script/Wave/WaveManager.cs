@@ -24,7 +24,7 @@ public class WaveManager : MonoBehaviour
         StartCoroutine(CoRunWaves());
     }
 
-    // 5~7개 WaveData를 순서대로 실행하고, 모든 적이 죽으면 다음 웨이브로 넘어간다.
+    // WaveData를 순서대로 실행하고, 현재 웨이브의 모든 적이 죽으면 다음 웨이브로 넘어간다.
     private IEnumerator CoRunWaves()
     {
         for (currentWaveIndex = 0; currentWaveIndex < waves.Count; currentWaveIndex++)
@@ -56,6 +56,7 @@ public class WaveManager : MonoBehaviour
         }
     }
 
+    // 적을 생성하고 Health.OnDead를 구독해 웨이브 생존 카운트를 추적한다.
     private void SpawnEnemy(GameObject prefab)
     {
         Vector3 pos = GetSpawnPosition();

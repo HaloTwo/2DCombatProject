@@ -55,7 +55,7 @@ public abstract class EnemyBrainBase : MonoBehaviour
 
     protected abstract void TickState();
 
-    // 플레이어를 잃으면 Idle로 돌아가고, 감지 범위 안에 들어오면 추적한다.
+    // 플레이어를 찾고 감지 범위에 따라 Idle/Chase 상태를 전환한다.
     protected void ResolveTarget()
     {
         if (target == null)
@@ -112,6 +112,7 @@ public abstract class EnemyBrainBase : MonoBehaviour
         transform.localScale = scale;
     }
 
+    // 사망 시 WaveManager가 OnDead 이벤트로 카운트를 줄이고, 적 오브젝트는 비활성화한다.
     protected virtual void HandleDead(Health dead)
     {
         state = EnemyState.Dead;

@@ -10,21 +10,24 @@ public class PlayerMovement2D : MonoBehaviour
     [SerializeField] private LayerMask groundMask;
 
     [Header("Move")]
-    [SerializeField] private float moveSpeed = 7f;
-    [SerializeField] private float jumpPower = 14f;
-    [SerializeField] private float coyoteTime = 0.08f;
-    [SerializeField] private float jumpBufferTime = 0.08f;
+    [SerializeField] private float moveSpeed = 6.5f;
+    [SerializeField] private float jumpPower = 8.5f;
+    [SerializeField] private int maxJumpCount = 2;
+    [SerializeField] private float coyoteTime = 0.1f;
+    [SerializeField] private float jumpBufferTime = 0.1f;
 
     [Header("Dash")]
-    [SerializeField] private float dashPower = 18f;
-    [SerializeField] private float dashDuration = 0.12f;
-    [SerializeField] private float dashCooldown = 0.35f;
+    [SerializeField] private float dashPower = 13f;
+    [SerializeField] private float dashDuration = 0.13f;
+    [SerializeField] private float dashCooldown = 0.3f;
 
     private float facing = 1f;
     private float lastGroundedTime;
     private float lastJumpPressedTime;
     private float nextDashTime;
+    private int jumpCount;
     private bool isDashing;
+    private Collider2D[] ownColliders;
 
     public float Facing => facing;
     public bool IsDashing => isDashing;
@@ -40,6 +43,8 @@ public class PlayerMovement2D : MonoBehaviour
     {
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (input == null) input = GetComponent<PlayerInputReader>();
+
+        ownColliders = GetComponentsInChildren<Collider2D>();
     }
 
     private void Update()
@@ -61,16 +66,21 @@ public class PlayerMovement2D : MonoBehaviour
         rb.linearVelocity = new Vector2(input.Move.x * moveSpeed, rb.linearVelocity.y);
     }
 
-    // 점프 입력 버퍼와 코요테 타임을 함께 처리해 플랫폼 액션 조작감을 보정한다.
+    // 지상 점프와 공중 2단 점프를 분리해서 점프 입력이 과하게 튀지 않게 처리한다.
     private void TryJump()
     {
         bool hasBufferedJump = Time.time - lastJumpPressedTime <= jumpBufferTime;
-        bool canUseCoyote = Time.time - lastGroundedTime <= coyoteTime;
+        if (!hasBufferedJump)
+            return;
 
-        if (!hasBufferedJump || !canUseCoyote)
+        bool canGroundJump = Time.time - lastGroundedTime <= coyoteTime;
+        bool canAirJump = !IsGrounded && jumpCount < maxJumpCount;
+
+        if (!canGroundJump && !canAirJump)
             return;
 
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpPower);
+        jumpCount = canGroundJump ? 1 : jumpCount + 1;
         lastJumpPressedTime = -999f;
         lastGroundedTime = -999f;
     }
@@ -89,8 +99,10 @@ public class PlayerMovement2D : MonoBehaviour
         nextDashTime = Time.time + dashCooldown;
 
         float originGravity = rb.gravityScale;
+        float dashDir = input != null && Mathf.Abs(input.Move.x) > 0.01f ? Mathf.Sign(input.Move.x) : facing;
+
         rb.gravityScale = 0f;
-        rb.linearVelocity = new Vector2(facing * dashPower, 0f);
+        rb.linearVelocity = new Vector2(dashDir * dashPower, 0f);
 
         yield return new WaitForSeconds(dashDuration);
 
@@ -101,10 +113,23 @@ public class PlayerMovement2D : MonoBehaviour
     private void UpdateGrounded()
     {
         Vector2 checkPos = groundCheck != null ? groundCheck.position : transform.position;
-        IsGrounded = Physics2D.OverlapCircle(checkPos, 0.12f, groundMask);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(checkPos, 0.16f, groundMask);
+        IsGrounded = false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            if (hits[i] == null || IsOwnCollider(hits[i]))
+                continue;
+
+            IsGrounded = true;
+            break;
+        }
 
         if (IsGrounded)
+        {
             lastGroundedTime = Time.time;
+            jumpCount = 0;
+        }
     }
 
     private void CacheInputTime()
@@ -122,5 +147,18 @@ public class PlayerMovement2D : MonoBehaviour
         Vector3 scale = transform.localScale;
         scale.x = Mathf.Abs(scale.x) * facing;
         transform.localScale = scale;
+    }
+
+    private bool IsOwnCollider(Collider2D target)
+    {
+        if (ownColliders == null) return false;
+
+        for (int i = 0; i < ownColliders.Length; i++)
+        {
+            if (ownColliders[i] == target)
+                return true;
+        }
+
+        return false;
     }
 }

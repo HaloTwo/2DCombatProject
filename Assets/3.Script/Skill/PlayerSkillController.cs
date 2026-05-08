@@ -15,6 +15,9 @@ public class PlayerSkillController : MonoBehaviour
     private float nextSkillTwoTime;
     private bool isUsingSkill;
 
+    public SkillData SkillOne => skillOne;
+    public SkillData SkillTwo => skillTwo;
+
     private void Reset()
     {
         input = GetComponent<PlayerInputReader>();
@@ -60,6 +63,13 @@ public class PlayerSkillController : MonoBehaviour
                 FireProjectile(skill);
                 break;
         }
+    }
+
+    // UI 슬롯 드래그 교체 시 실제 스킬 배치를 바꾼다.
+    public void SwapSkillSlots()
+    {
+        (skillOne, skillTwo) = (skillTwo, skillOne);
+        (nextSkillOneTime, nextSkillTwoTime) = (nextSkillTwoTime, nextSkillOneTime);
     }
 
     private IEnumerator CoDashAttack(SkillData skill)

@@ -37,7 +37,8 @@ public class RangedShooterEnemy : EnemyBrainBase
             return;
 
         nextFireTime = Time.time + fireCooldown;
-        animator?.SetTrigger("Attack");
+        if (animator != null)
+            animator.SetTrigger("Attack");
 
         Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position;
         GameObject go = ObjectPool.Instance != null

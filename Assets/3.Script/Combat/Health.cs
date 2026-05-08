@@ -23,14 +23,14 @@ public class Health : MonoBehaviour
         currentHp = maxHp;
     }
 
-    // 스폰/웨이브 재사용 시 체력과 무적 상태를 초기화한다.
+    // 웨이브 스폰이나 풀 재사용 시 체력과 무적 상태를 초기화한다.
     public void ResetHealth()
     {
         currentHp = maxHp;
         invincibleEndTime = 0f;
     }
 
-    // 모든 공격 판정은 이 함수로 들어오게 해서 팀 체크와 사망 처리를 한 곳에서 관리한다.
+    // 모든 공격 판정은 이 함수로 들어오며, 팀 체크와 사망 이벤트를 한 곳에서 관리한다.
     public bool TakeDamage(DamageInfo info)
     {
         if (IsDead) return false;

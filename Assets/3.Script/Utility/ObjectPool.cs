@@ -41,7 +41,7 @@ public class ObjectPool : MonoBehaviour
         }
     }
 
-    // 투사체와 피격 이펙트처럼 반복 생성되는 오브젝트를 미리 만들어 GC 비용을 줄인다.
+    // 투사체와 이펙트처럼 반복 생성되는 오브젝트를 미리 만들어 GC 비용을 줄인다.
     public void Register(GameObject prefab, int prewarmCount)
     {
         Pool pool = GetOrCreatePool(prefab);

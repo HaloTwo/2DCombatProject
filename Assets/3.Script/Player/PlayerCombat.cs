@@ -39,7 +39,8 @@ public class PlayerCombat : MonoBehaviour
     private IEnumerator CoBasicAttack()
     {
         isAttacking = true;
-        animator?.SetTrigger("Attack");
+        if (animator != null)
+            animator.SetTrigger("Attack");
 
         basicAttackHitbox.Open(Team.Player, basicAttack);
         yield return new WaitForSeconds(basicAttack.activeTime);

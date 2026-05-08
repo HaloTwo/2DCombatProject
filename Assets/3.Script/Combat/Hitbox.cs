@@ -22,7 +22,7 @@ public class Hitbox : MonoBehaviour
         SetActive(false);
     }
 
-    // 애니메이션 이벤트나 PlayerCombat에서 공격 판정이 살아있는 짧은 시간만 켠다.
+    // 공격 애니메이션 또는 전투 컨트롤러가 판정이 살아있는 짧은 시간 동안 호출한다.
     public void Open(Team team, AttackData data)
     {
         ownerTeam = team;
@@ -53,6 +53,7 @@ public class Hitbox : MonoBehaviour
         Vector2 direction = ((Vector2)other.transform.position - (Vector2)transform.position).normalized;
         Vector2 knockback = new Vector2(attackData.knockback.x * Mathf.Sign(direction.x == 0f ? transform.right.x : direction.x), attackData.knockback.y);
 
+        // 데미지, 넉백, 히트스톱을 하나로 묶어 피격 대상에게 전달한다.
         DamageInfo info = new DamageInfo(ownerTeam, attackData.damage, hitPoint, knockback, attackData.hitStopTime);
         if (hurtbox.ApplyDamage(info))
             hitTargets.Add(hurtbox.Health);

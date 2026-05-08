@@ -41,7 +41,8 @@ public class MeleeChargerEnemy : EnemyBrainBase
     private IEnumerator CoAttack()
     {
         state = EnemyState.Attack;
-        animator?.SetTrigger("Attack");
+        if (animator != null)
+            animator.SetTrigger("Attack");
 
         attackHitbox.Open(Team.Enemy, attackData);
         yield return new WaitForSeconds(attackData.activeTime);

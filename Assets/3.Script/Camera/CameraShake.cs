@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class CameraShake : MonoBehaviour
 {
+    public static CameraShake Instance { get; private set; }
+
     [SerializeField] private float defaultDuration = 0.08f;
     [SerializeField] private float defaultStrength = 0.08f;
 
@@ -11,7 +13,14 @@ public class CameraShake : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         originLocalPosition = transform.localPosition;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     public void Shake()
@@ -25,6 +34,12 @@ public class CameraShake : MonoBehaviour
             StopCoroutine(shakeRoutine);
 
         shakeRoutine = StartCoroutine(CoShake(duration, strength));
+    }
+
+    public static void ShakeDefault()
+    {
+        if (Instance != null)
+            Instance.Shake();
     }
 
     private IEnumerator CoShake(float duration, float strength)

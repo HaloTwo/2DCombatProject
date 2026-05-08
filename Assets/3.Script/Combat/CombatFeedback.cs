@@ -35,7 +35,7 @@ public class CombatFeedback : MonoBehaviour
             health.OnDamaged -= HandleDamaged;
     }
 
-    // 데미지 결과에 맞춰 넉백, 히트스톱, 피격 플래시를 한곳에서 실행한다.
+    // 피격 결과에 맞춰 넉백, 히트스톱, 피격 플래시, 카메라 쉐이크를 실행한다.
     private void HandleDamaged(Health damaged, DamageInfo info)
     {
         if (rb != null)
@@ -43,6 +43,8 @@ public class CombatFeedback : MonoBehaviour
 
         if (info.HitStopTime > 0f)
             StartCoroutine(CoHitStop(info.HitStopTime));
+
+        CameraShake.ShakeDefault();
 
         if (rendererCache != null)
         {
@@ -53,6 +55,7 @@ public class CombatFeedback : MonoBehaviour
         }
     }
 
+    // 짧은 전역 슬로우로 타격 순간을 강조한다. 추후 TimeController로 중앙화하면 중첩 제어가 더 쉬워진다.
     private IEnumerator CoHitStop(float duration)
     {
         float originScale = Time.timeScale;
