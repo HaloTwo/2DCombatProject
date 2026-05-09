@@ -47,4 +47,12 @@ public class Health : MonoBehaviour
 
         return true;
     }
+
+    public void SetInvincibleFor(float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        invincibleEndTime = Mathf.Max(invincibleEndTime, Time.time + duration);
+    }
 }

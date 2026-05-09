@@ -12,12 +12,25 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     [SerializeField] protected string playerTag = "Player";
     [SerializeField] protected float detectRange = 8f;
     [SerializeField] protected float attackRange = 1.2f;
-    [SerializeField] protected float moveSpeed = 3f;
+    [SerializeField] protected float moveSpeed = 1.65f;
+
+    [Header("Platform Chase")]
+    [SerializeField] protected LayerMask groundMask;
+    [SerializeField] protected float jumpForce = 7f;
+    [SerializeField] protected float groundCheckDistance = 0.7f;
+    [SerializeField] protected float obstacleCheckDistance = 0.45f;
+    [SerializeField] protected float targetHeightJumpThreshold = 0.55f;
+    [SerializeField] protected float jumpCooldown = 0.65f;
+    [SerializeField] protected float blockedStopTime = 0.2f;
 
     protected Transform target;
     protected EnemyState state = EnemyState.Idle;
     protected float facing = 1f;
     protected float stunEndTime;
+    private float nextJumpTime;
+    private float blockedUntilTime;
+    private Collider2D[] bodyColliders;
+    private static readonly System.Collections.Generic.List<EnemyBrainBase> activeEnemies = new();
 
     protected virtual void Reset()
     {
@@ -30,18 +43,32 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     {
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (health == null) health = GetComponent<Health>();
+        bodyColliders = GetComponentsInChildren<Collider2D>();
+
+        if (groundMask.value == 0)
+            groundMask = LayerMask.GetMask("Default");
     }
 
     protected virtual void OnEnable()
     {
+        RegisterEnemyCollision();
+
         if (health != null)
+        {
+            health.OnDamaged += HandleDamaged;
             health.OnDead += HandleDead;
+        }
     }
 
     protected virtual void OnDisable()
     {
+        UnregisterEnemyCollision();
+
         if (health != null)
+        {
+            health.OnDamaged -= HandleDamaged;
             health.OnDead -= HandleDead;
+        }
     }
 
     protected virtual void Update()
@@ -101,6 +128,26 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
         }
 
         Vector2 dir = ((Vector2)target.position - rb.position).normalized;
+        float xDirection = Mathf.Sign(dir.x);
+
+        if (Mathf.Abs(dir.x) > 0.01f)
+            TryPlatformJump(xDirection);
+
+        if (Time.time < blockedUntilTime)
+        {
+            StopMove();
+            Face(dir.x);
+            return;
+        }
+
+        if (Mathf.Abs(dir.x) > 0.01f && IsBlockedWithoutUsefulJump(xDirection))
+        {
+            blockedUntilTime = Time.time + blockedStopTime;
+            StopMove();
+            Face(dir.x);
+            return;
+        }
+
         rb.linearVelocity = new Vector2(dir.x * moveSpeed, rb.linearVelocity.y);
         Face(dir.x);
     }
@@ -108,6 +155,50 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     protected void StopMove()
     {
         rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+    }
+
+    protected void TryPlatformJump(float xDirection)
+    {
+        if (rb == null || target == null || Time.time < nextJumpTime || Mathf.Abs(xDirection) < 0.01f)
+            return;
+
+        if (!IsGrounded())
+            return;
+
+        bool targetIsHigher = target.position.y - transform.position.y > targetHeightJumpThreshold;
+        bool hasWallAhead = HasObstacleAhead(Mathf.Sign(xDirection));
+        bool canUseObstacleJump = hasWallAhead && target.position.y >= transform.position.y - 0.2f;
+        if (!targetIsHigher && !canUseObstacleJump)
+            return;
+
+        nextJumpTime = Time.time + jumpCooldown;
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+    }
+
+    protected bool IsGrounded()
+    {
+        if (rb == null)
+            return false;
+
+        RaycastHit2D hit = Physics2D.Raycast(rb.position, Vector2.down, groundCheckDistance, groundMask);
+        return hit.collider != null && !hit.collider.isTrigger;
+    }
+
+    protected bool HasObstacleAhead(float direction)
+    {
+        Vector2 origin = rb.position + Vector2.up * 0.15f;
+        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.right * direction, obstacleCheckDistance, groundMask);
+        return hit.collider != null && !hit.collider.isTrigger;
+    }
+
+    // 지형에 막힌 상태에서 무의미하게 계속 밀어붙이는 것을 줄인다.
+    protected bool IsBlockedWithoutUsefulJump(float direction)
+    {
+        if (!IsGrounded() || !HasObstacleAhead(direction))
+            return false;
+
+        bool targetIsHigher = target != null && target.position.y - transform.position.y > targetHeightJumpThreshold;
+        return !targetIsHigher && Time.time < nextJumpTime;
     }
 
     protected void Face(float xDirection)
@@ -128,6 +219,16 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
         gameObject.SetActive(false);
     }
 
+    // 실제 데미지를 받은 순간 공통 피격 애니메이션을 재생한다.
+    protected virtual void HandleDamaged(Health damaged, DamageInfo info)
+    {
+        state = EnemyState.Hit;
+        stunEndTime = Mathf.Max(stunEndTime, Time.time + 0.12f);
+
+        if (animator != null)
+            animator.SetTrigger("Hurt");
+    }
+
     public virtual void OnParried(Vector2 parryPoint, Vector2 parryDirection)
     {
         stunEndTime = Time.time + 0.45f;
@@ -142,5 +243,48 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     {
         if (animator == null) return;
         animator.SetBool("IsMoving", state == EnemyState.Chase);
+    }
+
+    // 몹끼리는 서로 밀어서 길막하지 않게 하고, 플레이어/지형과는 기존 물리 충돌을 유지한다.
+    private void RegisterEnemyCollision()
+    {
+        if (bodyColliders == null || bodyColliders.Length == 0)
+            bodyColliders = GetComponentsInChildren<Collider2D>();
+
+        for (int i = 0; i < activeEnemies.Count; i++)
+            IgnoreCollisionWith(activeEnemies[i], true);
+
+        if (!activeEnemies.Contains(this))
+            activeEnemies.Add(this);
+    }
+
+    private void UnregisterEnemyCollision()
+    {
+        activeEnemies.Remove(this);
+
+        for (int i = 0; i < activeEnemies.Count; i++)
+            IgnoreCollisionWith(activeEnemies[i], false);
+    }
+
+    private void IgnoreCollisionWith(EnemyBrainBase other, bool ignore)
+    {
+        if (other == null || other.bodyColliders == null)
+            return;
+
+        for (int i = 0; i < bodyColliders.Length; i++)
+        {
+            Collider2D own = bodyColliders[i];
+            if (own == null || own.isTrigger)
+                continue;
+
+            for (int j = 0; j < other.bodyColliders.Length; j++)
+            {
+                Collider2D targetCollider = other.bodyColliders[j];
+                if (targetCollider == null || targetCollider.isTrigger)
+                    continue;
+
+                Physics2D.IgnoreCollision(own, targetCollider, ignore);
+            }
+        }
     }
 }

@@ -5,6 +5,7 @@ public class Projectile : MonoBehaviour, IPoolable, IParryReactable
 {
     [SerializeField] private float speed = 12f;
     [SerializeField] private float lifeTime = 2f;
+    [SerializeField] private bool keepHorizontalSlash = true;
 
     private Team ownerTeam;
     private AttackData attackData;
@@ -17,6 +18,13 @@ public class Projectile : MonoBehaviour, IPoolable, IParryReactable
         attackData = data;
         direction = fireDirection.sqrMagnitude > 0.01f ? fireDirection.normalized : Vector2.right;
         despawnTime = Time.time + lifeTime;
+
+        Vector3 scale = transform.localScale;
+        scale.x = Mathf.Abs(scale.x) * Mathf.Sign(direction.x == 0f ? 1f : direction.x);
+        transform.localScale = scale;
+
+        if (keepHorizontalSlash)
+            transform.rotation = Quaternion.identity;
     }
 
     private void Update()
@@ -43,6 +51,10 @@ public class Projectile : MonoBehaviour, IPoolable, IParryReactable
         direction = -direction;
         transform.position = parryPoint + direction * 0.25f;
         despawnTime = Time.time + lifeTime;
+
+        Vector3 scale = transform.localScale;
+        scale.x = Mathf.Abs(scale.x) * Mathf.Sign(direction.x == 0f ? 1f : direction.x);
+        transform.localScale = scale;
     }
 
     public void OnSpawned()

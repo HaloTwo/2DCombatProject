@@ -16,7 +16,6 @@ GameObject:
   - component: {fileID: 2694266424200393593}
   - component: {fileID: 469509430886333190}
   - component: {fileID: 4962283336376026046}
-  - component: {fileID: 1542758993884431937}
   - component: {fileID: 2622136342301200733}
   m_Layer: 0
   m_Name: TrainingDummy
@@ -107,14 +106,14 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 581080148522337229}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 3.2
+  m_GravityScale: 0
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -170,7 +169,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.75, y: 1.15}
+  m_Size: {x: 1.03, y: 1.15}
   m_EdgeRadius: 0
 --- !u!114 &8086731377016126371
 MonoBehaviour:
@@ -230,21 +229,14 @@ MonoBehaviour:
   health: {fileID: 8086731377016126371}
   rb: {fileID: 7317946125928568772}
   rendererCache: {fileID: 469509430886333190}
---- !u!114 &1542758993884431937
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 581080148522337229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5046082d1ac91674ca1ecb3a1b77ced4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DamageTextSpawner
-  health: {fileID: 8086731377016126371}
-  textColor: {r: 1, g: 0.92, b: 0.22, a: 1}
-  spawnOffset: {x: 0, y: 0.45, z: 0}
+  applyPhysicalKnockback: 0
+  knockbackMultiplier: 0.1
+  maxKnockbackX: 1.2
+  maxKnockbackY: 0.7
+  flashTime: 0.08
+  spawnDamageText: 1
+  damageTextColor: {r: 1, g: 0.92, b: 0.22, a: 1}
+  damageTextOffset: {x: 0, y: 0.45, z: 0}
 --- !u!114 &2622136342301200733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -258,3 +250,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainingDummy
   health: {fileID: 8086731377016126371}
+  rb: {fileID: 7317946125928568772}

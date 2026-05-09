@@ -11,6 +11,15 @@ public class SkillSlotBarUI : MonoBehaviour
         Refresh();
     }
 
+    private void Update()
+    {
+        if (skillController == null)
+            return;
+
+        slotOne?.SetCooldown(skillController.GetCooldownRatio(0), skillController.GetCooldownRemaining(0));
+        slotTwo?.SetCooldown(skillController.GetCooldownRatio(1), skillController.GetCooldownRemaining(1));
+    }
+
     public void Bind(PlayerSkillController controller)
     {
         skillController = controller;

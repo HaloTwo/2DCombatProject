@@ -56,7 +56,7 @@ Transform:
   m_GameObject: {fileID: 3536863857527052054}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.85, y: 0.28, z: 0}
+  m_LocalPosition: {x: 0.243, y: -0.413, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -81,7 +81,6 @@ GameObject:
   - component: {fileID: 5369976282911732317}
   - component: {fileID: 7161924363155483859}
   - component: {fileID: 4846962692922688131}
-  - component: {fileID: 817483359782952138}
   - component: {fileID: 2530577442337316834}
   - component: {fileID: 8513724251962214074}
   m_Layer: 0
@@ -172,7 +171,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.03}
+  m_Offset: {x: 0, y: -0.25}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -182,7 +181,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.8, y: 1.35}
+  m_Size: {x: 0.4, y: 0.75}
   m_EdgeRadius: 0
 --- !u!114 &2655619090673079263
 MonoBehaviour:
@@ -240,6 +239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement2D
   input: {fileID: 4745650321542300253}
   rb: {fileID: 8945240710127607946}
+  health: {fileID: 0}
   groundCheck: {fileID: 5789298289719220089}
   groundMask:
     serializedVersion: 2
@@ -249,6 +249,13 @@ MonoBehaviour:
   maxJumpCount: 2
   coyoteTime: 0.1
   jumpBufferTime: 0.1
+  groundCheckSize: {x: 0.58, y: 0.08}
+  groundCheckDistance: 0.12
+  minGroundNormalY: 0.65
+  groundContactGraceTime: 0.08
+  wallCheckSize: {x: 0.68, y: 1.05}
+  wallCheckDistance: 0.08
+  minWallNormalX: 0.65
   dashPower: 13
   dashDuration: 0.13
   dashCooldown: 0.3
@@ -301,6 +308,14 @@ MonoBehaviour:
   health: {fileID: 2655619090673079263}
   rb: {fileID: 8945240710127607946}
   rendererCache: {fileID: 5369976282911732317}
+  applyPhysicalKnockback: 1
+  knockbackMultiplier: 0.1
+  maxKnockbackX: 1.2
+  maxKnockbackY: 0.7
+  flashTime: 0.08
+  spawnDamageText: 0
+  damageTextColor: {r: 1, g: 1, b: 1, a: 1}
+  damageTextOffset: {x: 0, y: 0.45, z: 0}
 --- !u!114 &4846962692922688131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -320,23 +335,9 @@ MonoBehaviour:
   rb: {fileID: 8945240710127607946}
   health: {fileID: 2655619090673079263}
   useNoBloodDeath: 0
---- !u!114 &817483359782952138
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4185035155971104924}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eefde68d89de7f74c87f0e1feed2cb25, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerDashEffect
-  movement: {fileID: 4530850618612268224}
-  sourceRenderer: {fileID: 7328258565031827854}
-  ghostColor: {r: 0.55, g: 0.85, b: 1, a: 0.48}
-  ghostInterval: 0.035
-  ghostLifeTime: 0.22
+  dashGhostColor: {r: 0.55, g: 0.85, b: 1, a: 0.48}
+  dashGhostInterval: 0.035
+  dashGhostLifeTime: 0.22
   dashAlpha: 0.62
 --- !u!114 &2530577442337316834
 MonoBehaviour:
@@ -354,6 +355,10 @@ MonoBehaviour:
   basicAttackHitbox: {fileID: 7834423063251476601}
   basicAttack: {fileID: 11400000, guid: ebe89d8c902de524ca43ae8ff7764eae, type: 2}
   animator: {fileID: 2260845058193702356}
+  useAnimationEventHitTiming: 1
+  attackMotionTime: 0.42
+  attackStartupTime: 0.18
+  comboInputWindow: 0.5
 --- !u!114 &8513724251962214074
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -369,17 +374,21 @@ MonoBehaviour:
   input: {fileID: 4745650321542300253}
   movement: {fileID: 4530850618612268224}
   rb: {fileID: 8945240710127607946}
+  animator: {fileID: 0}
   skillHitbox: {fileID: 2220936521829097214}
   projectileSpawnPoint: {fileID: 583320727286823383}
-  skillOne: {fileID: 11400000, guid: 10664ae586775824a8524245684db630, type: 2}
-  skillTwo: {fileID: 11400000, guid: 1bde3c2ededab014fbd58bfe2b92ea38, type: 2}
+  skillOne: {fileID: 11400000, guid: a634d27b21d90144db1f3fabec1aa657, type: 2}
+  skillTwo: {fileID: 11400000, guid: de0f425d861565a4ea7177638baad68e, type: 2}
   availableSkills:
+  - {fileID: 11400000, guid: a634d27b21d90144db1f3fabec1aa657, type: 2}
+  - {fileID: 11400000, guid: de0f425d861565a4ea7177638baad68e, type: 2}
+  - {fileID: 11400000, guid: 5ff250a2b813c62498fecd14bfcb6fcf, type: 2}
   - {fileID: 11400000, guid: 10664ae586775824a8524245684db630, type: 2}
   - {fileID: 11400000, guid: 1bde3c2ededab014fbd58bfe2b92ea38, type: 2}
-  - {fileID: 11400000, guid: 5ff250a2b813c62498fecd14bfcb6fcf, type: 2}
-  - {fileID: 11400000, guid: de0f425d861565a4ea7177638baad68e, type: 2}
-  - {fileID: 11400000, guid: a634d27b21d90144db1f3fabec1aa657, type: 2}
   - {fileID: 11400000, guid: a25010a3f9342a44f92021cf22b23d56, type: 2}
+  slashEffectPrefab: {fileID: 99670727572316380, guid: 0f868423b43374c47b4a2ab423ea62a6, type: 3}
+  risingEffectPrefab: {fileID: 701568740615211414, guid: 10de8cf96ea31d1428d784d64b935a63, type: 3}
+  slamEffectPrefab: {fileID: 2113935620815546934, guid: 437b21ca2f5182049bd524f9c94fdae7, type: 3}
 --- !u!1 &4626034308429901680
 GameObject:
   m_ObjectHideFlags: 0
@@ -407,7 +416,7 @@ Transform:
   m_GameObject: {fileID: 4626034308429901680}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.85, y: 0.05, z: 0}
+  m_LocalPosition: {x: 0.356, y: -0.351, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -457,7 +466,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.25, y: 0.75}
+  m_Size: {x: 1.01, y: 0.75}
   m_EdgeRadius: 0
 --- !u!114 &7834423063251476601
 MonoBehaviour:
@@ -485,6 +494,7 @@ GameObject:
   - component: {fileID: 8934398929199154957}
   - component: {fileID: 7328258565031827854}
   - component: {fileID: 2260845058193702356}
+  - component: {fileID: 2590447428896069329}
   m_Layer: 0
   m_Name: Visual_MartialHero
   m_TagString: Untagged
@@ -588,6 +598,19 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &2590447428896069329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605871595288315624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e789332a32b607b4cac5a361b9ccdd78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  combat: {fileID: 2530577442337316834}
 --- !u!1 &9184041148785188305
 GameObject:
   m_ObjectHideFlags: 0
@@ -615,7 +638,7 @@ Transform:
   m_GameObject: {fileID: 9184041148785188305}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.15, y: 0.05, z: 0}
+  m_LocalPosition: {x: 1.15, y: -0.13, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -22,13 +22,37 @@ public class RangedShooterEnemy : EnemyBrainBase
         Face(toTarget.x);
 
         if (Mathf.Abs(toTarget.x) < keepDistance)
-            rb.linearVelocity = new Vector2(-Mathf.Sign(toTarget.x) * moveSpeed, rb.linearVelocity.y);
+        {
+            MoveHorizontally(-Mathf.Sign(toTarget.x));
+        }
         else if (Mathf.Abs(toTarget.x) > keepDistance + 1f)
-            rb.linearVelocity = new Vector2(Mathf.Sign(toTarget.x) * moveSpeed, rb.linearVelocity.y);
+        {
+            MoveHorizontally(Mathf.Sign(toTarget.x));
+        }
         else
+        {
             StopMove();
+        }
 
         TryFire();
+    }
+
+    private void MoveHorizontally(float direction)
+    {
+        if (Mathf.Abs(direction) < 0.01f)
+        {
+            StopMove();
+            return;
+        }
+
+        if (IsBlockedWithoutUsefulJump(direction))
+        {
+            StopMove();
+            return;
+        }
+
+        rb.linearVelocity = new Vector2(direction * moveSpeed, rb.linearVelocity.y);
+        TryPlatformJump(direction);
     }
 
     private void TryFire()

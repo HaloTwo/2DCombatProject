@@ -45,6 +45,16 @@ public class Hitbox : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        TryHit(other);
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        TryHit(other);
+    }
+
+    private void TryHit(Collider2D other)
+    {
         if (attackData == null) return;
         if (!other.TryGetComponent(out Hurtbox hurtbox)) return;
         if (hurtbox.Health == null || hitTargets.Contains(hurtbox.Health)) return;

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Wave_3
   m_EditorClassIdentifier: Assembly-CSharp::WaveData
   enemies:
-  - enemyPrefab: {fileID: 4236221192273013242, guid: b3e88495bf9b2f04aa820986a5c0d0ac, type: 3}
+  - enemyPrefab: {fileID: 7439954532678875669, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
     count: 3
     interval: 0.25
-  - enemyPrefab: {fileID: 4312682345748328848, guid: c2f99fe5a8b612a49abe8303a4a8f69a, type: 3}
+  - enemyPrefab: {fileID: 2695319892295685654, guid: 0ef088a37be2ffc46a9c21aecc64e3e2, type: 3}
     count: 2
     interval: 0.35
   nextWaveDelay: 1.2

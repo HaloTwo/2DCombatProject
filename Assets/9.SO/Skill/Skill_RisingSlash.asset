@@ -18,4 +18,4 @@ MonoBehaviour:
   duration: 0.22
   range: 2
   force: 15
-  projectilePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 4837269703097687841, guid: 307eb24a2a9402a41b96410189d5716a, type: 3}

@@ -143,3 +143,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
   speed: 12
   lifeTime: 2
+  keepHorizontalSlash: 1

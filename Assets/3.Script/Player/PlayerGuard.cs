@@ -99,15 +99,13 @@ public class PlayerGuard : MonoBehaviour
         if (hitStopRoutine != null)
             StopCoroutine(hitStopRoutine);
 
-        hitStopRoutine = StartCoroutine(CoParryHitStop());
+        GlobalHitStop.Play(parryHitStop);
+        hitStopRoutine = StartCoroutine(CoParryHitStopMarker());
     }
 
-    private IEnumerator CoParryHitStop()
+    private IEnumerator CoParryHitStopMarker()
     {
-        float originScale = Time.timeScale;
-        Time.timeScale = 0.04f;
         yield return new WaitForSecondsRealtime(parryHitStop);
-        Time.timeScale = originScale;
         hitStopRoutine = null;
     }
 

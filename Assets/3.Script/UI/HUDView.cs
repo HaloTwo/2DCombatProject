@@ -21,6 +21,11 @@ public class HUDView : MonoBehaviour
             playerHealth.OnDamaged -= HandlePlayerDamaged;
     }
 
+    private void Start()
+    {
+        Refresh();
+    }
+
     private void HandlePlayerDamaged(Health health, DamageInfo info)
     {
         Refresh();

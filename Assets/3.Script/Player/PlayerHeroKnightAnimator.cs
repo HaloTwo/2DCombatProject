@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -12,7 +13,16 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
     [SerializeField] private Health health;
     [SerializeField] private bool useNoBloodDeath;
 
+    [Header("Dash Effect")]
+    [SerializeField] private Color dashGhostColor = new Color(0.55f, 0.85f, 1f, 0.48f);
+    [SerializeField] private float dashGhostInterval = 0.035f;
+    [SerializeField] private float dashGhostLifeTime = 0.22f;
+    [SerializeField] private float dashAlpha = 0.62f;
+
     private readonly Dictionary<string, AnimatorControllerParameterType> parameterTypes = new();
+    private bool wasDashing;
+    private float nextDashGhostTime;
+    private Color originColor = Color.white;
 
     private void Reset()
     {
@@ -48,6 +58,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
 
         UpdateMovementParameters();
         UpdateActionTriggers();
+        UpdateDashEffect();
         UpdateFacing();
     }
 
@@ -76,12 +87,6 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
 
         if (input.DashPressed)
             SetTriggerFirst("Dash", "Roll");
-
-        if (input.SkillOnePressed)
-            SetTrigger("Attack2");
-
-        if (input.SkillTwoPressed)
-            SetTrigger("Attack3");
 
         if (input.BlockPressed)
             SetTrigger("Block");
@@ -114,6 +119,68 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
         if (movement == null) movement = GetComponent<PlayerMovement2D>();
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (health == null) health = GetComponent<Health>();
+        if (spriteRenderer != null) originColor = spriteRenderer.color;
+    }
+
+    private void UpdateDashEffect()
+    {
+        if (movement == null || spriteRenderer == null)
+            return;
+
+        if (movement.IsDashing)
+        {
+            if (!wasDashing)
+            {
+                originColor = spriteRenderer.color;
+                spriteRenderer.color = new Color(originColor.r, originColor.g, originColor.b, dashAlpha);
+                nextDashGhostTime = 0f;
+            }
+
+            if (Time.time >= nextDashGhostTime)
+                SpawnDashGhost();
+        }
+        else if (wasDashing)
+        {
+            spriteRenderer.color = originColor;
+        }
+
+        wasDashing = movement.IsDashing;
+    }
+
+    private void SpawnDashGhost()
+    {
+        nextDashGhostTime = Time.time + dashGhostInterval;
+
+        GameObject ghost = new GameObject("DashGhost");
+        ghost.transform.position = spriteRenderer.transform.position;
+        ghost.transform.rotation = spriteRenderer.transform.rotation;
+        ghost.transform.localScale = spriteRenderer.transform.lossyScale;
+
+        SpriteRenderer renderer = ghost.AddComponent<SpriteRenderer>();
+        renderer.sprite = spriteRenderer.sprite;
+        renderer.flipX = spriteRenderer.flipX;
+        renderer.flipY = spriteRenderer.flipY;
+        renderer.sortingLayerID = spriteRenderer.sortingLayerID;
+        renderer.sortingOrder = spriteRenderer.sortingOrder - 1;
+        renderer.color = dashGhostColor;
+
+        StartCoroutine(CoFadeDashGhost(renderer, ghost));
+    }
+
+    private IEnumerator CoFadeDashGhost(SpriteRenderer renderer, GameObject ghost)
+    {
+        float elapsed = 0f;
+        Color startColor = renderer.color;
+
+        while (elapsed < dashGhostLifeTime)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = Mathf.Lerp(startColor.a, 0f, elapsed / dashGhostLifeTime);
+            renderer.color = new Color(startColor.r, startColor.g, startColor.b, alpha);
+            yield return null;
+        }
+
+        Destroy(ghost);
     }
 
     private void CacheAnimatorParameters()

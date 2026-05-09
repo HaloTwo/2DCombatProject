@@ -6,11 +6,17 @@ public class PlayerSkillController : MonoBehaviour
     [SerializeField] private PlayerInputReader input;
     [SerializeField] private PlayerMovement2D movement;
     [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Animator animator;
     [SerializeField] private Hitbox skillHitbox;
     [SerializeField] private Transform projectileSpawnPoint;
     [SerializeField] private SkillData skillOne;
     [SerializeField] private SkillData skillTwo;
     [SerializeField] private SkillData[] availableSkills;
+
+    [Header("Effects")]
+    [SerializeField] private GameObject slashEffectPrefab;
+    [SerializeField] private GameObject risingEffectPrefab;
+    [SerializeField] private GameObject slamEffectPrefab;
 
     private float nextSkillOneTime;
     private float nextSkillTwoTime;
@@ -25,6 +31,7 @@ public class PlayerSkillController : MonoBehaviour
         input = GetComponent<PlayerInputReader>();
         movement = GetComponent<PlayerMovement2D>();
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponentInChildren<Animator>();
     }
 
     private void Awake()
@@ -32,6 +39,7 @@ public class PlayerSkillController : MonoBehaviour
         if (input == null) input = GetComponent<PlayerInputReader>();
         if (movement == null) movement = GetComponent<PlayerMovement2D>();
         if (rb == null) rb = GetComponent<Rigidbody2D>();
+        if (animator == null) animator = GetComponentInChildren<Animator>();
     }
 
     private void Update()
@@ -48,10 +56,11 @@ public class PlayerSkillController : MonoBehaviour
     // 과제 필수 조건인 스킬 2종 이상을 한 컨트롤러에서 관리한다.
     private void TryUseSkill(SkillData skill, ref float nextUseTime)
     {
-        if (skill == null || isUsingSkill) return;
-        if (Time.time < nextUseTime) return;
+        if (!CanUseSkill(skill, nextUseTime))
+            return;
 
         nextUseTime = Time.time + skill.cooldown;
+        TriggerSkillAnimation(skill);
 
         switch (skill.skillType)
         {
@@ -76,6 +85,32 @@ public class PlayerSkillController : MonoBehaviour
         }
     }
 
+    private bool CanUseSkill(SkillData skill, float nextUseTime)
+    {
+        if (skill == null || isUsingSkill)
+            return false;
+
+        return Time.time >= nextUseTime;
+    }
+
+    private void TriggerSkillAnimation(SkillData skill)
+    {
+        if (animator == null || skill == null)
+            return;
+
+        string triggerName = skill.skillType switch
+        {
+            SkillType.GroundSlam => "Attack1",
+            SkillType.RisingSlash => "Attack3",
+            SkillType.Projectile => "Attack3",
+            SkillType.BackStepShot => "Attack3",
+            SkillType.DashAttack => "Dash",
+            _ => "Attack1"
+        };
+
+        animator.SetTrigger(triggerName);
+    }
+
     // UI 슬롯 드래그 교체 시 실제 스킬 배치를 바꾼다.
     public void SwapSkillSlots()
     {
@@ -83,10 +118,30 @@ public class PlayerSkillController : MonoBehaviour
         (nextSkillOneTime, nextSkillTwoTime) = (nextSkillTwoTime, nextSkillOneTime);
     }
 
+    public float GetCooldownRemaining(int slotIndex)
+    {
+        SkillData skill = slotIndex == 0 ? skillOne : skillTwo;
+        if (skill == null)
+            return 0f;
+
+        float nextUseTime = slotIndex == 0 ? nextSkillOneTime : nextSkillTwoTime;
+        return Mathf.Max(0f, nextUseTime - Time.time);
+    }
+
+    public float GetCooldownRatio(int slotIndex)
+    {
+        SkillData skill = slotIndex == 0 ? skillOne : skillTwo;
+        if (skill == null || skill.cooldown <= 0f)
+            return 0f;
+
+        return Mathf.Clamp01(GetCooldownRemaining(slotIndex) / skill.cooldown);
+    }
+
     private IEnumerator CoDashAttack(SkillData skill)
     {
         isUsingSkill = true;
         float facing = movement != null ? movement.Facing : Mathf.Sign(transform.localScale.x);
+        SpawnEffect(slashEffectPrefab, transform.position + new Vector3(facing * 0.85f, 0.1f, 0f), new Vector3(facing, 1f, 1f));
 
         if (skillHitbox != null && skill.attackData != null)
             skillHitbox.Open(Team.Player, skill.attackData);
@@ -103,6 +158,7 @@ public class PlayerSkillController : MonoBehaviour
     private IEnumerator CoAreaAttack(SkillData skill)
     {
         isUsingSkill = true;
+        SpawnEffect(slashEffectPrefab, transform.position + new Vector3(0.65f * (movement != null ? movement.Facing : Mathf.Sign(transform.localScale.x)), 0.05f, 0f), new Vector3(movement != null ? movement.Facing : Mathf.Sign(transform.localScale.x), 1.35f, 1f));
 
         if (skillHitbox != null && skill.attackData != null)
             skillHitbox.Open(Team.Player, skill.attackData);
@@ -118,6 +174,7 @@ public class PlayerSkillController : MonoBehaviour
     {
         isUsingSkill = true;
         float facing = movement != null ? movement.Facing : Mathf.Sign(transform.localScale.x);
+        SpawnEffect(risingEffectPrefab, transform.position + new Vector3(facing * 0.55f, 0.4f, 0f), new Vector3(facing, 1f, 1f));
 
         if (rb != null)
             rb.linearVelocity = new Vector2(facing * skill.force * 0.35f, skill.force * 0.55f);
@@ -140,6 +197,7 @@ public class PlayerSkillController : MonoBehaviour
             rb.linearVelocity = new Vector2(0f, -Mathf.Abs(skill.force));
 
         yield return new WaitForSeconds(skill.duration * 0.45f);
+        SpawnEffect(slamEffectPrefab, transform.position + new Vector3(0f, -0.65f, 0f), Vector3.one);
 
         if (skillHitbox != null && skill.attackData != null)
             skillHitbox.Open(Team.Player, skill.attackData);
@@ -160,6 +218,7 @@ public class PlayerSkillController : MonoBehaviour
             rb.linearVelocity = new Vector2(-facing * Mathf.Abs(skill.force), rb.linearVelocity.y);
 
         FireProjectile(skill);
+        SpawnEffect(slashEffectPrefab, transform.position + new Vector3(facing * 0.55f, 0.2f, 0f), new Vector3(facing, 1f, 1f));
         yield return new WaitForSeconds(skill.duration);
 
         isUsingSkill = false;
@@ -171,14 +230,32 @@ public class PlayerSkillController : MonoBehaviour
             return;
 
         Vector3 spawnPos = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position;
+        float facing = movement != null ? movement.Facing : Mathf.Sign(transform.localScale.x);
+        spawnPos += new Vector3(facing * 0.35f, 0f, 0f);
+
         GameObject go = ObjectPool.Instance != null
             ? ObjectPool.Instance.Get(skill.projectilePrefab, spawnPos, Quaternion.identity)
             : Instantiate(skill.projectilePrefab, spawnPos, Quaternion.identity);
 
         if (go.TryGetComponent(out Projectile projectile))
         {
-            float facing = movement != null ? movement.Facing : Mathf.Sign(transform.localScale.x);
             projectile.Fire(Team.Player, Vector2.right * facing, skill.attackData);
         }
+    }
+
+    private void SpawnEffect(GameObject prefab, Vector3 position, Vector3 scale)
+    {
+        if (prefab == null)
+            return;
+
+        GameObject effect = ObjectPool.Instance != null
+            ? ObjectPool.Instance.Get(prefab, position, Quaternion.identity)
+            : Instantiate(prefab, position, Quaternion.identity);
+
+        Vector3 baseScale = prefab.transform.localScale;
+        effect.transform.localScale = new Vector3(Mathf.Abs(baseScale.x) * scale.x, baseScale.y * scale.y, baseScale.z * scale.z);
+
+        if (effect.TryGetComponent(out TimedAutoRelease autoRelease))
+            autoRelease.Play();
     }
 }

@@ -17,6 +17,7 @@ public static class PrototypeSceneBuilder
     private const string TrainingSceneAppliedMarkerPath = "Assets/9.SO/.training_scene_applied";
     private const string DashEffectAppliedMarkerPath = "Assets/9.SO/.dash_effect_applied";
     private const string CombatHudAppliedMarkerPath = "Assets/9.SO/.combat_hud_applied";
+    private const string CombatPolishAppliedMarkerPath = "Assets/9.SO/.combat_polish_applied";
     private const string StartScenePath = "Assets/1.Scene/StartScene.unity";
     private const string LoadingScenePath = "Assets/1.Scene/LoadingScene.unity";
     private const string GameScenePath = "Assets/1.Scene/GameScene.unity";
@@ -29,7 +30,7 @@ public static class PrototypeSceneBuilder
     {
         EditorApplication.delayCall += () =>
         {
-            if (File.Exists(MarkerPath) && File.Exists(HeroKnightAppliedMarkerPath) && File.Exists(GuardParryAppliedMarkerPath) && File.Exists(TrainingSceneAppliedMarkerPath) && File.Exists(DashEffectAppliedMarkerPath) && File.Exists(CombatHudAppliedMarkerPath)) return;
+            if (File.Exists(MarkerPath) && File.Exists(HeroKnightAppliedMarkerPath) && File.Exists(GuardParryAppliedMarkerPath) && File.Exists(TrainingSceneAppliedMarkerPath) && File.Exists(DashEffectAppliedMarkerPath) && File.Exists(CombatHudAppliedMarkerPath) && File.Exists(CombatPolishAppliedMarkerPath)) return;
             BuildPrototype();
             File.WriteAllText(MarkerPath, "generated");
             File.WriteAllText(HeroKnightAppliedMarkerPath, "hero knight visual applied");
@@ -37,12 +38,14 @@ public static class PrototypeSceneBuilder
             File.WriteAllText(TrainingSceneAppliedMarkerPath, "one-way platform and training dummy applied");
             File.WriteAllText(DashEffectAppliedMarkerPath, "dash afterimage effect applied");
             File.WriteAllText(CombatHudAppliedMarkerPath, "combat hud applied");
+            File.WriteAllText(CombatPolishAppliedMarkerPath, "grounding dummy and skill effect polish applied");
             AssetDatabase.ImportAsset(MarkerPath);
             AssetDatabase.ImportAsset(HeroKnightAppliedMarkerPath);
             AssetDatabase.ImportAsset(GuardParryAppliedMarkerPath);
             AssetDatabase.ImportAsset(TrainingSceneAppliedMarkerPath);
             AssetDatabase.ImportAsset(DashEffectAppliedMarkerPath);
             AssetDatabase.ImportAsset(CombatHudAppliedMarkerPath);
+            AssetDatabase.ImportAsset(CombatPolishAppliedMarkerPath);
         };
     }
 
@@ -64,6 +67,9 @@ public static class PrototypeSceneBuilder
         GameObject playerProjectile = CreateProjectilePrefab("PlayerProjectile", Color.cyan);
         GameObject enemyProjectilePrefab = CreateProjectilePrefab("EnemyProjectile", Color.magenta);
         GameObject parryEffectPrefab = CreateParryEffectPrefab();
+        GameObject slashEffectPrefab = CreateSimpleEffectPrefab("SlashEffect", new Color(0.65f, 0.9f, 1f, 0.72f), new Vector3(1.25f, 0.22f, 1f), 0.18f);
+        GameObject risingEffectPrefab = CreateSimpleEffectPrefab("RisingSlashEffect", new Color(0.75f, 0.9f, 1f, 0.72f), new Vector3(0.48f, 1.15f, 1f), 0.22f);
+        GameObject slamEffectPrefab = CreateSimpleEffectPrefab("SlamShockwaveEffect", new Color(1f, 0.72f, 0.25f, 0.78f), new Vector3(1.85f, 0.18f, 1f), 0.24f);
 
         SkillData skillDash = CreateSkillData("Skill_DashAttack", SkillType.DashAttack, dashAttack, 1.2f, 0.14f, 2.5f, 20f, null);
         SkillData skillArea = CreateSkillData("Skill_AreaAttack", SkillType.AreaAttack, areaAttack, 2.0f, 0.18f, 2.2f, 0f, null);
@@ -71,9 +77,9 @@ public static class PrototypeSceneBuilder
         SkillData skillRising = CreateSkillData("Skill_RisingSlash", SkillType.RisingSlash, risingSlashAttack, 1.4f, 0.22f, 2.0f, 15f, null);
         SkillData skillSlam = CreateSkillData("Skill_GroundSlam", SkillType.GroundSlam, groundSlamAttack, 2.4f, 0.34f, 2.6f, 22f, null);
         SkillData skillBackShot = CreateSkillData("Skill_BackStepShot", SkillType.BackStepShot, backStepShotAttack, 1.6f, 0.18f, 6f, 10f, playerProjectile);
-        SkillData[] playerSkills = { skillRising, skillSlam, skillDash, skillArea, skillProjectile, skillBackShot };
+        SkillData[] playerSkills = { skillProjectile, skillArea, skillDash, skillRising, skillSlam, skillBackShot };
 
-        GameObject playerPrefab = CreatePlayerPrefab(basicAttack, playerSkills, parryEffectPrefab);
+        GameObject playerPrefab = CreatePlayerPrefab(basicAttack, playerSkills, parryEffectPrefab, slashEffectPrefab, risingEffectPrefab, slamEffectPrefab);
         GameObject meleeEnemyPrefab = CreateMeleeEnemyPrefab(enemyMelee);
         GameObject rangedEnemyPrefab = CreateRangedEnemyPrefab(enemyProjectile, enemyProjectilePrefab);
         GameObject trainingDummyPrefab = CreateTrainingDummyPrefab();
@@ -82,7 +88,7 @@ public static class PrototypeSceneBuilder
 
         CreateStartScene();
         CreateLoadingScene();
-        CreateGameScene(playerPrefab, meleeEnemyPrefab, rangedEnemyPrefab, trainingDummyPrefab, playerProjectile, enemyProjectilePrefab, parryEffectPrefab, waves);
+        CreateGameScene(playerPrefab, meleeEnemyPrefab, rangedEnemyPrefab, trainingDummyPrefab, playerProjectile, enemyProjectilePrefab, parryEffectPrefab, slashEffectPrefab, risingEffectPrefab, slamEffectPrefab, waves);
         SetBuildScenes();
 
         AssetDatabase.SaveAssets();
@@ -183,7 +189,7 @@ public static class PrototypeSceneBuilder
         return waves;
     }
 
-    private static GameObject CreatePlayerPrefab(AttackData basicAttack, SkillData[] playerSkills, GameObject parryEffectPrefab)
+    private static GameObject CreatePlayerPrefab(AttackData basicAttack, SkillData[] playerSkills, GameObject parryEffectPrefab, GameObject slashEffectPrefab, GameObject risingEffectPrefab, GameObject slamEffectPrefab)
     {
         GameObject root = new GameObject("Player");
         root.tag = "Player";
@@ -193,6 +199,7 @@ public static class PrototypeSceneBuilder
         Animator playerAnimator = AttachMartialHeroVisual(root);
 
         Rigidbody2D rb = root.AddComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Dynamic;
         rb.freezeRotation = true;
         rb.gravityScale = 3.2f;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
@@ -215,7 +222,6 @@ public static class PrototypeSceneBuilder
         root.AddComponent<ListRendererCache>();
         root.AddComponent<CombatFeedback>();
         AddPlayerHeroKnightAnimator(root);
-        AddComponentByTypeName(root, "PlayerDashEffect");
 
         SerializedObject guardSo = new SerializedObject(guard);
         guardSo.FindProperty("input").objectReferenceValue = root.GetComponent<PlayerInputReader>();
@@ -249,10 +255,14 @@ public static class PrototypeSceneBuilder
         SerializedObject skillSo = new SerializedObject(skills);
         skillSo.FindProperty("movement").objectReferenceValue = movement;
         skillSo.FindProperty("rb").objectReferenceValue = rb;
+        skillSo.FindProperty("animator").objectReferenceValue = playerAnimator;
         skillSo.FindProperty("skillHitbox").objectReferenceValue = skillHitboxComp;
         skillSo.FindProperty("projectileSpawnPoint").objectReferenceValue = projectileSpawn.transform;
         skillSo.FindProperty("skillOne").objectReferenceValue = playerSkills.Length > 0 ? playerSkills[0] : null;
         skillSo.FindProperty("skillTwo").objectReferenceValue = playerSkills.Length > 1 ? playerSkills[1] : null;
+        skillSo.FindProperty("slashEffectPrefab").objectReferenceValue = slashEffectPrefab;
+        skillSo.FindProperty("risingEffectPrefab").objectReferenceValue = risingEffectPrefab;
+        skillSo.FindProperty("slamEffectPrefab").objectReferenceValue = slamEffectPrefab;
         SerializedProperty availableSkills = skillSo.FindProperty("availableSkills");
         availableSkills.arraySize = playerSkills.Length;
         for (int i = 0; i < playerSkills.Length; i++)
@@ -562,11 +572,13 @@ public static class PrototypeSceneBuilder
         root.transform.localScale = new Vector3(0.9f, 1.55f, 1f);
 
         Rigidbody2D rb = root.AddComponent<Rigidbody2D>();
+        rb.bodyType = RigidbodyType2D.Kinematic;
         rb.freezeRotation = true;
-        rb.gravityScale = 3.2f;
+        rb.gravityScale = 0f;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
         BoxCollider2D collider = root.AddComponent<BoxCollider2D>();
+        collider.isTrigger = false;
         collider.size = new Vector2(0.75f, 1.15f);
         collider.offset = new Vector2(0f, 0.03f);
 
@@ -579,14 +591,13 @@ public static class PrototypeSceneBuilder
 
         root.AddComponent<Hurtbox>();
         root.AddComponent<ListRendererCache>();
-        root.AddComponent<CombatFeedback>();
-        Component spawner = AddComponentByTypeName(root, "DamageTextSpawner");
-        if (spawner != null)
-        {
-            SerializedObject spawnerSo = new SerializedObject(spawner);
-            spawnerSo.FindProperty("textColor").colorValue = new Color(1f, 0.92f, 0.22f);
-            spawnerSo.ApplyModifiedPropertiesWithoutUndo();
-        }
+        CombatFeedback feedback = root.AddComponent<CombatFeedback>();
+        SerializedObject feedbackSo = new SerializedObject(feedback);
+        feedbackSo.FindProperty("applyPhysicalKnockback").boolValue = false;
+        feedbackSo.FindProperty("spawnDamageText").boolValue = true;
+        feedbackSo.FindProperty("damageTextColor").colorValue = new Color(1f, 0.92f, 0.22f);
+        feedbackSo.ApplyModifiedPropertiesWithoutUndo();
+
         AddComponentByTypeName(root, "TrainingDummy");
 
         string path = "Assets/7.Prefab/Enemy/TrainingDummy.prefab";
@@ -600,7 +611,9 @@ public static class PrototypeSceneBuilder
         GameObject root = new GameObject(name);
 
         SpriteRenderer renderer = root.AddComponent<SpriteRenderer>();
-        renderer.sprite = CreateSprite($"{name}Sprite", color);
+        renderer.sprite = name == "PlayerProjectile"
+            ? CreateSprite("SlashEffectSprite", new Color(0.65f, 0.9f, 1f, 0.72f))
+            : CreateSprite($"{name}Sprite", color);
         renderer.sortingOrder = 9;
 
         Rigidbody2D rb = root.AddComponent<Rigidbody2D>();
@@ -618,6 +631,7 @@ public static class PrototypeSceneBuilder
         healthSo.ApplyModifiedPropertiesWithoutUndo();
 
         root.AddComponent<Hurtbox>();
+        root.AddComponent<EnemyContactDamage>();
         root.AddComponent<ListRendererCache>();
         root.AddComponent<CombatFeedback>();
         return root;
@@ -630,14 +644,43 @@ public static class PrototypeSceneBuilder
         SpriteRenderer renderer = root.AddComponent<SpriteRenderer>();
         renderer.sprite = CreateSprite($"{name}Sprite", color);
         renderer.sortingOrder = 12;
+        if (name == "PlayerProjectile")
+            root.transform.localScale = new Vector3(2.35f, 0.28f, 1f);
 
         CircleCollider2D collider = root.AddComponent<CircleCollider2D>();
         collider.isTrigger = true;
-        collider.radius = 0.15f;
+        collider.radius = name == "PlayerProjectile" ? 0.26f : 0.15f;
 
-        root.AddComponent<Projectile>();
+        Projectile projectile = root.AddComponent<Projectile>();
+        if (name == "PlayerProjectile")
+        {
+            SerializedObject projectileSo = new SerializedObject(projectile);
+            projectileSo.FindProperty("speed").floatValue = 18f;
+            projectileSo.FindProperty("lifeTime").floatValue = 0.75f;
+            projectileSo.ApplyModifiedPropertiesWithoutUndo();
+        }
 
         string path = $"Assets/7.Prefab/Projectile/{name}.prefab";
+        GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
+        Object.DestroyImmediate(root);
+        return prefab;
+    }
+
+    private static GameObject CreateSimpleEffectPrefab(string name, Color color, Vector3 scale, float lifeTime)
+    {
+        GameObject root = new GameObject(name);
+        root.transform.localScale = scale;
+
+        SpriteRenderer renderer = root.AddComponent<SpriteRenderer>();
+        renderer.sprite = CreateSprite($"{name}Sprite", color);
+        renderer.sortingOrder = 28;
+
+        TimedAutoRelease autoRelease = root.AddComponent<TimedAutoRelease>();
+        SerializedObject autoSo = new SerializedObject(autoRelease);
+        autoSo.FindProperty("lifeTime").floatValue = lifeTime;
+        autoSo.ApplyModifiedPropertiesWithoutUndo();
+
+        string path = $"Assets/7.Prefab/Effect/{name}.prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
         Object.DestroyImmediate(root);
         return prefab;
@@ -733,6 +776,46 @@ public static class PrototypeSceneBuilder
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
+    private static Sprite CreateCircleSprite(string name, Color color)
+    {
+        string path = $"Assets/4.Sprite/{name}.png";
+        Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+
+        if (texture == null)
+        {
+            const int size = 64;
+            texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            Color clear = new Color(color.r, color.g, color.b, 0f);
+            Vector2 center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+            float radius = (size - 2) * 0.5f;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float distance = Vector2.Distance(new Vector2(x, y), center);
+                    texture.SetPixel(x, y, distance <= radius ? color : clear);
+                }
+            }
+
+            texture.Apply();
+            File.WriteAllBytes(path, texture.EncodeToPNG());
+            AssetDatabase.ImportAsset(path);
+        }
+
+        TextureImporter importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        if (importer != null)
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.spritePixelsPerUnit = 64f;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.SaveAndReimport();
+        }
+
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
     private static void CreateStartScene()
     {
         Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -777,7 +860,7 @@ public static class PrototypeSceneBuilder
         EditorSceneManager.SaveScene(scene, LoadingScenePath);
     }
 
-    private static void CreateGameScene(GameObject playerPrefab, GameObject meleeEnemyPrefab, GameObject rangedEnemyPrefab, GameObject trainingDummyPrefab, GameObject playerProjectile, GameObject enemyProjectile, GameObject parryEffectPrefab, WaveData[] waves)
+    private static void CreateGameScene(GameObject playerPrefab, GameObject meleeEnemyPrefab, GameObject rangedEnemyPrefab, GameObject trainingDummyPrefab, GameObject playerProjectile, GameObject enemyProjectile, GameObject parryEffectPrefab, GameObject slashEffectPrefab, GameObject risingEffectPrefab, GameObject slamEffectPrefab, WaveData[] waves)
     {
         Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -798,12 +881,15 @@ public static class PrototypeSceneBuilder
         ObjectPool pool = managers.AddComponent<ObjectPool>();
         SerializedObject poolSo = new SerializedObject(pool);
         SerializedProperty entries = poolSo.FindProperty("initialPools");
-        entries.arraySize = 5;
+        entries.arraySize = 8;
         SetPoolEntry(entries.GetArrayElementAtIndex(0), meleeEnemyPrefab, 6);
         SetPoolEntry(entries.GetArrayElementAtIndex(1), rangedEnemyPrefab, 4);
         SetPoolEntry(entries.GetArrayElementAtIndex(2), enemyProjectile, 10);
         SetPoolEntry(entries.GetArrayElementAtIndex(3), playerProjectile, 8);
         SetPoolEntry(entries.GetArrayElementAtIndex(4), parryEffectPrefab, 6);
+        SetPoolEntry(entries.GetArrayElementAtIndex(5), slashEffectPrefab, 8);
+        SetPoolEntry(entries.GetArrayElementAtIndex(6), risingEffectPrefab, 4);
+        SetPoolEntry(entries.GetArrayElementAtIndex(7), slamEffectPrefab, 4);
         poolSo.ApplyModifiedPropertiesWithoutUndo();
 
         CreateGround("Ground_LongArena", new Vector3(0f, -1.25f, 0f), new Vector2(38f, 0.6f), new Color(0.25f, 0.25f, 0.25f));
@@ -903,14 +989,19 @@ public static class PrototypeSceneBuilder
         renderer.sprite = CreateSprite($"{name}Sprite", color);
         go.transform.localScale = new Vector3(size.x, size.y, 1f);
 
-        BoxCollider2D collider = go.AddComponent<BoxCollider2D>();
-        collider.size = Vector2.one;
+        EdgeCollider2D collider = go.AddComponent<EdgeCollider2D>();
+        collider.points = new[]
+        {
+            new Vector2(-0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f)
+        };
         collider.usedByEffector = true;
 
         PlatformEffector2D effector = go.AddComponent<PlatformEffector2D>();
         effector.useOneWay = true;
         effector.useOneWayGrouping = true;
-        effector.surfaceArc = 160f;
+        effector.surfaceArc = 120f;
+        effector.sideArc = 0f;
     }
 
     private static GameObject CreateCanvas()
@@ -1100,15 +1191,15 @@ public static class PrototypeSceneBuilder
         root.transform.SetParent(parent, false);
 
         RectTransform rect = root.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0f);
-        rect.anchorMax = new Vector2(0.5f, 0f);
-        rect.pivot = new Vector2(0.5f, 0f);
-        rect.sizeDelta = new Vector2(260f, 86f);
-        rect.anchoredPosition = new Vector2(0f, 24f);
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(0f, 0f);
+        rect.pivot = new Vector2(0f, 0f);
+        rect.sizeDelta = new Vector2(250f, 82f);
+        rect.anchoredPosition = new Vector2(22f, 64f);
 
         SkillSlotBarUI bar = root.AddComponent<SkillSlotBarUI>();
-        SkillSlotUI slotOne = CreateSkillSlot(root.transform, "SkillSlot_A", new Vector2(-70f, 0f));
-        SkillSlotUI slotTwo = CreateSkillSlot(root.transform, "SkillSlot_S", new Vector2(70f, 0f));
+        SkillSlotUI slotOne = CreateSkillSlot(root.transform, "SkillSlot_A", new Vector2(56f, 40f));
+        SkillSlotUI slotTwo = CreateSkillSlot(root.transform, "SkillSlot_S", new Vector2(178f, 40f));
 
         SerializedObject barSo = new SerializedObject(bar);
         barSo.FindProperty("skillController").objectReferenceValue = controller;
@@ -1123,27 +1214,69 @@ public static class PrototypeSceneBuilder
         slot.transform.SetParent(parent, false);
 
         RectTransform rect = slot.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(112f, 72f);
+        rect.sizeDelta = new Vector2(72f, 72f);
         rect.anchoredPosition = anchoredPosition;
 
         Image background = slot.AddComponent<Image>();
-        background.color = new Color(0.1f, 0.35f, 0.75f, 0.9f);
+        background.sprite = CreateCircleSprite("SkillSlotCircleSprite", Color.white);
+        background.color = new Color(0.025f, 0.035f, 0.065f, 0.96f);
+        Outline outline = slot.AddComponent<Outline>();
+        outline.effectColor = new Color(0.18f, 0.48f, 0.78f, 0.95f);
+        outline.effectDistance = new Vector2(2f, -2f);
         slot.AddComponent<CanvasGroup>();
 
-        Text keyText = CreateText(slot.transform, "KeyText", "A", new Vector2(-35f, 18f), 20, TextAnchor.MiddleCenter);
-        keyText.rectTransform.sizeDelta = new Vector2(36f, 32f);
+        Text keyText = CreateText(slot.transform, "KeyText", "A", new Vector2(0f, -47f), 18, TextAnchor.MiddleCenter);
+        keyText.rectTransform.sizeDelta = new Vector2(36f, 24f);
+        keyText.color = new Color(0.72f, 0.95f, 1f);
 
-        Text skillText = CreateText(slot.transform, "SkillText", "Skill", new Vector2(18f, -8f), 19, TextAnchor.MiddleCenter);
-        skillText.rectTransform.sizeDelta = new Vector2(76f, 44f);
+        Text skillText = CreateText(slot.transform, "SkillText", "Skill", new Vector2(0f, 0f), 15, TextAnchor.MiddleCenter);
+        skillText.rectTransform.sizeDelta = new Vector2(62f, 42f);
+        skillText.color = Color.white;
+
+        Image cooldownFill = CreateCooldownFill(slot.transform);
+        Text cooldownText = CreateText(slot.transform, "CooldownText", string.Empty, Vector2.zero, 22, TextAnchor.MiddleCenter);
+        cooldownText.rectTransform.anchorMin = Vector2.zero;
+        cooldownText.rectTransform.anchorMax = Vector2.one;
+        cooldownText.rectTransform.offsetMin = Vector2.zero;
+        cooldownText.rectTransform.offsetMax = Vector2.zero;
+        cooldownText.fontStyle = FontStyle.Bold;
+        cooldownText.raycastTarget = false;
+        cooldownText.enabled = false;
 
         SkillSlotUI ui = slot.AddComponent<SkillSlotUI>();
         SerializedObject uiSo = new SerializedObject(ui);
         uiSo.FindProperty("keyText").objectReferenceValue = keyText;
         uiSo.FindProperty("skillText").objectReferenceValue = skillText;
         uiSo.FindProperty("background").objectReferenceValue = background;
+        uiSo.FindProperty("cooldownFill").objectReferenceValue = cooldownFill;
+        uiSo.FindProperty("cooldownText").objectReferenceValue = cooldownText;
         uiSo.ApplyModifiedPropertiesWithoutUndo();
 
         return ui;
+    }
+
+    private static Image CreateCooldownFill(Transform parent)
+    {
+        GameObject fillObject = new GameObject("CooldownFill");
+        fillObject.transform.SetParent(parent, false);
+
+        RectTransform rect = fillObject.AddComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        Image image = fillObject.AddComponent<Image>();
+        image.sprite = CreateCircleSprite("SkillSlotCircleSprite", Color.white);
+        image.color = new Color(0f, 0f, 0f, 0.68f);
+        image.type = Image.Type.Filled;
+        image.fillMethod = Image.FillMethod.Radial360;
+        image.fillOrigin = (int)Image.Origin360.Top;
+        image.fillClockwise = true;
+        image.fillAmount = 0f;
+        image.raycastTarget = false;
+        image.enabled = false;
+        return image;
     }
 
     private static GameObject CreatePanel(Transform parent, string name, string label, Color color)
