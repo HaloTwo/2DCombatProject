@@ -35,6 +35,12 @@ public static class FantasyEnemyPrefabBuilder
 
     private static void CreateFlyingEye(AttackData attackData)
     {
+        if (PrefabExists("FlyingEyeEnemy"))
+        {
+            Debug.Log("[FantasyEnemyPrefabBuilder] FlyingEyeEnemy already exists. Skipped to preserve inspector values.");
+            return;
+        }
+
         GameObject root = CreateBaseEnemy("FlyingEyeEnemy", "Flying eye", 24f, 3.6f, 1.05f, 0f);
         Rigidbody2D rb = root.GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
@@ -49,6 +55,12 @@ public static class FantasyEnemyPrefabBuilder
 
     private static void CreateMeleeEnemy(string prefabName, string spriteFolder, AttackData attackData, float hp, float speed, float scale)
     {
+        if (PrefabExists(prefabName))
+        {
+            Debug.Log($"[FantasyEnemyPrefabBuilder] {prefabName} already exists. Skipped to preserve inspector values.");
+            return;
+        }
+
         GameObject root = CreateBaseEnemy(prefabName, spriteFolder, hp, speed, scale, 3.2f);
         GameObject hitbox = CreateHitboxChild(root.transform, "AttackHitbox", new Vector2(1.05f, 0.8f), new Vector3(0.62f, 0.04f, 0f));
 
@@ -59,6 +71,12 @@ public static class FantasyEnemyPrefabBuilder
 
     private static void CreateRangedMushroom(AttackData projectileAttackData, GameObject projectilePrefab)
     {
+        if (PrefabExists("MushroomEnemy"))
+        {
+            Debug.Log("[FantasyEnemyPrefabBuilder] MushroomEnemy already exists. Skipped to preserve inspector values.");
+            return;
+        }
+
         GameObject root = CreateBaseEnemy("MushroomEnemy", "Mushroom", 32f, 1.9f, 1.1f, 3.2f);
         GameObject firePoint = new GameObject("FirePoint");
         firePoint.transform.SetParent(root.transform, false);
@@ -123,6 +141,7 @@ public static class FantasyEnemyPrefabBuilder
 
         Animator animator = visual.AddComponent<Animator>();
         animator.runtimeAnimatorController = CreateController(spriteFolder);
+        visual.AddComponent<EnemyAnimationEventRelay>();
 
         CreateHealthBar(root.transform, health);
         return root;
@@ -137,13 +156,14 @@ public static class FantasyEnemyPrefabBuilder
         root.transform.SetParent(parent, false);
         root.transform.localPosition = new Vector3(0f, 0.78f, 0f);
 
-        SpriteRenderer back = CreateBarRenderer(root.transform, "Back", black, new Vector3(0f, 0f, 0f), new Vector3(0.7f, 0.08f, 1f), 30);
+        Vector3 barScale = new Vector3(0.7f, 0.08f, 1f);
+        SpriteRenderer back = CreateBarRenderer(root.transform, "Back", black, Vector3.zero, barScale, 30);
 
         GameObject fillAnchor = new GameObject("FillAnchor");
         fillAnchor.transform.SetParent(root.transform, false);
-        fillAnchor.transform.localPosition = new Vector3(-0.32f, 0f, -0.01f);
+        fillAnchor.transform.localPosition = Vector3.zero;
 
-        SpriteRenderer fill = CreateBarRenderer(fillAnchor.transform, "Fill", red, new Vector3(0.32f, 0f, 0f), new Vector3(0.64f, 0.045f, 1f), 31);
+        SpriteRenderer fill = CreateBarRenderer(fillAnchor.transform, "Fill", red, Vector3.zero, barScale, 31);
 
         EnemyWorldHealthBar healthBar = root.AddComponent<EnemyWorldHealthBar>();
         SerializedObject so = new SerializedObject(healthBar);
@@ -201,8 +221,10 @@ public static class FantasyEnemyPrefabBuilder
     {
         string path = $"{ControllerRoot}/{spriteFolder}_Enemy.controller";
         AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
-        if (controller == null)
-            controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+        if (controller != null)
+            return controller;
+
+        controller = AnimatorController.CreateAnimatorControllerAtPath(path);
 
         while (controller.parameters.Length > 0)
             controller.RemoveParameter(controller.parameters[0]);
@@ -243,11 +265,11 @@ public static class FantasyEnemyPrefabBuilder
     {
         string clipPath = $"{ControllerRoot}/{spriteFolder}_{sheetName.Replace(" ", string.Empty)}.anim";
         AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
-        if (clip == null)
-        {
-            clip = new AnimationClip();
-            AssetDatabase.CreateAsset(clip, clipPath);
-        }
+        if (clip != null)
+            return clip;
+
+        clip = new AnimationClip();
+        AssetDatabase.CreateAsset(clip, clipPath);
 
         Sprite[] sprites = LoadSprites(spriteFolder, sheetName);
         if (sprites.Length == 0)
@@ -269,8 +291,23 @@ public static class FantasyEnemyPrefabBuilder
             propertyName = "m_Sprite"
         }, frames);
 
+        if (sheetName.StartsWith("Attack"))
+            AddAttackAnimationEvents(clip, sprites.Length / frameRate);
+
         EditorUtility.SetDirty(clip);
         return clip;
+    }
+
+    private static void AddAttackAnimationEvents(AnimationClip clip, float clipLength)
+    {
+        float openTime = Mathf.Max(0f, clipLength * 0.35f);
+        float closeTime = Mathf.Max(openTime + 0.01f, clipLength * 0.68f);
+
+        AnimationUtility.SetAnimationEvents(clip, new[]
+        {
+            new AnimationEvent { time = openTime, functionName = "OpenEnemyAttackHitbox" },
+            new AnimationEvent { time = closeTime, functionName = "CloseEnemyAttackHitbox" }
+        });
     }
 
     private static Sprite[] LoadSprites(string spriteFolder, string sheetName)
@@ -338,11 +375,11 @@ public static class FantasyEnemyPrefabBuilder
         EnsureFolder("Assets/9.SO/Attack");
         string path = $"Assets/9.SO/Attack/{name}.asset";
         AttackData data = AssetDatabase.LoadAssetAtPath<AttackData>(path);
-        if (data == null)
-        {
-            data = ScriptableObject.CreateInstance<AttackData>();
-            AssetDatabase.CreateAsset(data, path);
-        }
+        if (data != null)
+            return data;
+
+        data = ScriptableObject.CreateInstance<AttackData>();
+        AssetDatabase.CreateAsset(data, path);
 
         data.damage = damage;
         data.knockback = knockback;
@@ -356,6 +393,11 @@ public static class FantasyEnemyPrefabBuilder
     private static GameObject CreateProjectilePrefab(string name, Color color, float speed, float lifeTime)
     {
         EnsureFolder("Assets/7.Prefab/Projectile");
+        string path = $"Assets/7.Prefab/Projectile/{name}.prefab";
+        GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (existing != null)
+            return existing;
+
         GameObject root = new GameObject(name);
         SpriteRenderer renderer = root.AddComponent<SpriteRenderer>();
         renderer.sprite = CreateSolidSprite($"{name}Sprite", color);
@@ -372,7 +414,6 @@ public static class FantasyEnemyPrefabBuilder
         projectileSo.FindProperty("lifeTime").floatValue = lifeTime;
         projectileSo.ApplyModifiedPropertiesWithoutUndo();
 
-        string path = $"Assets/7.Prefab/Projectile/{name}.prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
         Object.DestroyImmediate(root);
         return prefab;
@@ -411,6 +452,12 @@ public static class FantasyEnemyPrefabBuilder
         string path = $"{GeneratedRoot}/{name}.prefab";
         PrefabUtility.SaveAsPrefabAsset(root, path);
         Object.DestroyImmediate(root);
+    }
+
+    private static bool PrefabExists(string name)
+    {
+        string path = $"{GeneratedRoot}/{name}.prefab";
+        return AssetDatabase.LoadAssetAtPath<GameObject>(path) != null;
     }
 
     private static void EnsureFolder(string folder)

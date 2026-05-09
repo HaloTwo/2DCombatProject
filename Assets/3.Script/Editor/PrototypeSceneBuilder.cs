@@ -28,30 +28,16 @@ public static class PrototypeSceneBuilder
     [InitializeOnLoadMethod]
     private static void AutoBuildOnce()
     {
-        EditorApplication.delayCall += () =>
-        {
-            if (File.Exists(MarkerPath) && File.Exists(HeroKnightAppliedMarkerPath) && File.Exists(GuardParryAppliedMarkerPath) && File.Exists(TrainingSceneAppliedMarkerPath) && File.Exists(DashEffectAppliedMarkerPath) && File.Exists(CombatHudAppliedMarkerPath) && File.Exists(CombatPolishAppliedMarkerPath)) return;
-            BuildPrototype();
-            File.WriteAllText(MarkerPath, "generated");
-            File.WriteAllText(HeroKnightAppliedMarkerPath, "hero knight visual applied");
-            File.WriteAllText(GuardParryAppliedMarkerPath, "guard parry applied");
-            File.WriteAllText(TrainingSceneAppliedMarkerPath, "one-way platform and training dummy applied");
-            File.WriteAllText(DashEffectAppliedMarkerPath, "dash afterimage effect applied");
-            File.WriteAllText(CombatHudAppliedMarkerPath, "combat hud applied");
-            File.WriteAllText(CombatPolishAppliedMarkerPath, "grounding dummy and skill effect polish applied");
-            AssetDatabase.ImportAsset(MarkerPath);
-            AssetDatabase.ImportAsset(HeroKnightAppliedMarkerPath);
-            AssetDatabase.ImportAsset(GuardParryAppliedMarkerPath);
-            AssetDatabase.ImportAsset(TrainingSceneAppliedMarkerPath);
-            AssetDatabase.ImportAsset(DashEffectAppliedMarkerPath);
-            AssetDatabase.ImportAsset(CombatHudAppliedMarkerPath);
-            AssetDatabase.ImportAsset(CombatPolishAppliedMarkerPath);
-        };
+        // 자동 프로토타입 생성은 수동으로 맞춘 씬/프리팹/콜라이더 값을 덮어쓸 수 있어서 비활성화한다.
     }
 
     [MenuItem("2DCombatProject/Build Temporary Prototype")]
     public static void BuildPrototype()
     {
+        EditorUtility.DisplayDialog("Prototype Builder Disabled", "수동 세팅을 보호하기 위해 임시 프로토타입 빌더 실행을 막았습니다.", "OK");
+        return;
+
+#pragma warning disable CS0162
         EnsureFolders();
 
         AttackData basicAttack = CreateAttackData("BasicAttack", 10f, new Vector2(7f, 2f), 0.055f, 0.11f, 0.22f);
@@ -95,6 +81,7 @@ public static class PrototypeSceneBuilder
         AssetDatabase.Refresh();
 
         Debug.Log("[PrototypeSceneBuilder] Temporary prototype generated.");
+#pragma warning restore CS0162
     }
 
     private static void EnsureFolders()

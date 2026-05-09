@@ -30,11 +30,16 @@ public class PlayerMovement2D : MonoBehaviour
     [SerializeField] private float dashDuration = 0.13f;
     [SerializeField] private float dashCooldown = 0.3f;
 
+    [Header("Hit Stun")]
+    [SerializeField] private float hitStunDuration = 0.18f;
+    [SerializeField] private float damageInvincibleDuration = 0.65f;
+
     private float facing = 1f;
     private float lastGroundedTime;
     private float lastGroundContactTime = -999f;
     private float lastJumpPressedTime;
     private float nextDashTime;
+    private float controlLockedUntilTime;
     private int jumpCount;
     private bool isDashing;
     private Collider2D[] ownColliders;
@@ -61,10 +66,25 @@ public class PlayerMovement2D : MonoBehaviour
         ApplyNoFrictionMaterial();
     }
 
+    private void OnEnable()
+    {
+        if (health != null)
+            health.OnDamaged += HandleDamaged;
+    }
+
+    private void OnDisable()
+    {
+        if (health != null)
+            health.OnDamaged -= HandleDamaged;
+    }
+
     private void Update()
     {
         UpdateGrounded();
         CacheInputTime();
+
+        if (IsControlLocked())
+            return;
 
         if (input != null && input.DashPressed)
             TryDash();
@@ -76,6 +96,12 @@ public class PlayerMovement2D : MonoBehaviour
     private void FixedUpdate()
     {
         if (isDashing || input == null) return;
+
+        if (IsControlLocked())
+        {
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            return;
+        }
 
         float moveX = input.Move.x;
         if (IsBlockedHorizontally(moveX))
@@ -105,7 +131,7 @@ public class PlayerMovement2D : MonoBehaviour
 
     private void TryDash()
     {
-        if (Time.time < nextDashTime || isDashing)
+        if (Time.time < nextDashTime || isDashing || IsControlLocked())
             return;
 
         StartCoroutine(CoDash());
@@ -162,7 +188,7 @@ public class PlayerMovement2D : MonoBehaviour
         for (int i = 0; i < overlaps.Length; i++)
         {
             Collider2D overlap = overlaps[i];
-            if (overlap == null || overlap.isTrigger || IsOwnCollider(overlap))
+            if (overlap == null || overlap.isTrigger || IsOwnCollider(overlap) || IsEnemyCollider(overlap))
                 continue;
 
             if (IsOneWayPlatform(overlap) && rb != null && rb.linearVelocity.y > 0.05f)
@@ -205,7 +231,7 @@ public class PlayerMovement2D : MonoBehaviour
         for (int i = 0; i < hits.Length; i++)
         {
             RaycastHit2D hit = hits[i];
-            if (hit.collider == null || hit.collider.isTrigger || IsOwnCollider(hit.collider) || IsOneWayPlatform(hit.collider))
+            if (hit.collider == null || hit.collider.isTrigger || IsOwnCollider(hit.collider) || IsEnemyCollider(hit.collider) || IsOneWayPlatform(hit.collider))
                 continue;
 
             if (Mathf.Abs(hit.normal.x) < minWallNormalX)
@@ -227,7 +253,7 @@ public class PlayerMovement2D : MonoBehaviour
 
     private bool IsGroundLayer(Collider2D target)
     {
-        if (target == null || target.isTrigger || IsOwnCollider(target))
+        if (target == null || target.isTrigger || IsOwnCollider(target) || IsEnemyCollider(target))
             return false;
 
         int targetMask = 1 << target.gameObject.layer;
@@ -265,6 +291,7 @@ public class PlayerMovement2D : MonoBehaviour
     private void UpdateFacing()
     {
         if (input == null) return;
+        if (IsControlLocked()) return;
         if (Mathf.Abs(input.Move.x) < 0.01f) return;
 
         facing = Mathf.Sign(input.Move.x);
@@ -327,6 +354,25 @@ public class PlayerMovement2D : MonoBehaviour
     {
         Health targetHealth = target.GetComponentInParent<Health>();
         return targetHealth != null && targetHealth.Team == Team.Enemy;
+    }
+
+    // 피격 직후에는 이동/점프/대시 입력을 잠깐 막아서 맞는 느낌과 판정 피드백을 분리한다.
+    private void HandleDamaged(Health damaged, DamageInfo info)
+    {
+        if (damageInvincibleDuration > 0f)
+            damaged.SetInvincibleFor(damageInvincibleDuration);
+
+        if (hitStunDuration <= 0f)
+            return;
+
+        controlLockedUntilTime = Mathf.Max(controlLockedUntilTime, Time.time + hitStunDuration);
+        if (!isDashing && rb != null)
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+    }
+
+    private bool IsControlLocked()
+    {
+        return Time.time < controlLockedUntilTime;
     }
 
     private readonly struct ColliderPair

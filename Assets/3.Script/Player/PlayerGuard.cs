@@ -7,6 +7,7 @@ public class PlayerGuard : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Animator animator;
     [SerializeField] private GameObject parryEffectPrefab;
+    [SerializeField] private string guardTriggerName = "Hurt";
 
     [Header("Timing")]
     [SerializeField] private float parryWindow = 0.16f;
@@ -45,7 +46,7 @@ public class PlayerGuard : MonoBehaviour
     {
         parryEndTime = Time.time + parryWindow;
         if (animator != null)
-            animator.SetTrigger("Block");
+            animator.SetTrigger(guardTriggerName);
     }
 
     // Hurtbox가 데미지 적용 직전에 호출한다. 성공하면 데미지는 취소되고 공격자에게 반격 연출을 보낸다.

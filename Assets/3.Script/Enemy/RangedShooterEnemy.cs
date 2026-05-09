@@ -14,7 +14,13 @@ public class RangedShooterEnemy : EnemyBrainBase
     {
         if (target == null)
         {
-            StopMove();
+            PatrolGround();
+            return;
+        }
+
+        if (state == EnemyState.Idle)
+        {
+            PatrolGround();
             return;
         }
 

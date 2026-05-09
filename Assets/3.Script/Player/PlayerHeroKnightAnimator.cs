@@ -12,6 +12,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Health health;
     [SerializeField] private bool useNoBloodDeath;
+    [SerializeField] private string damagedTriggerName = "Block";
 
     [Header("Dash Effect")]
     [SerializeField] private Color dashGhostColor = new Color(0.55f, 0.85f, 1f, 0.48f);
@@ -88,8 +89,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
         if (input.DashPressed)
             SetTriggerFirst("Dash", "Roll");
 
-        if (input.BlockPressed)
-            SetTrigger("Block");
+        // 가드/패링 시작 트리거는 PlayerGuard에서만 처리한다.
     }
 
     private void UpdateFacing()
@@ -102,7 +102,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
 
     private void HandleDamaged(Health target, DamageInfo info)
     {
-        SetTrigger("Hurt");
+        SetTrigger(damagedTriggerName);
     }
 
     private void HandleDead(Health target)

@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 public class FlyingMeleeEnemy : EnemyBrainBase
@@ -7,8 +6,10 @@ public class FlyingMeleeEnemy : EnemyBrainBase
     [SerializeField] private AttackData attackData;
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private float hoverHeightOffset = 0.15f;
+    [SerializeField] private float attackStateDuration = 0.55f;
 
     private float nextAttackTime;
+    private float attackEndTime;
 
     protected override void Awake()
     {
@@ -19,7 +20,7 @@ public class FlyingMeleeEnemy : EnemyBrainBase
             rb.bodyType = RigidbodyType2D.Kinematic;
         }
 
-        SetBodyCollidersTrigger();
+        // 콜라이더 크기/오프셋/트리거 여부는 프리팹 인스펙터에서 맞춘 값을 그대로 따른다.
     }
 
     protected override void TickState()
@@ -30,7 +31,27 @@ public class FlyingMeleeEnemy : EnemyBrainBase
             return;
         }
 
-        if (IsTargetInAttackRange())
+        if (state == EnemyState.Idle)
+        {
+            StopMove();
+            return;
+        }
+
+        if (state == EnemyState.Attack)
+        {
+            StopMove();
+            Face(target.position.x - transform.position.x);
+
+            if (Time.time >= attackEndTime)
+            {
+                CloseAttackHitbox();
+                state = EnemyState.Chase;
+            }
+
+            return;
+        }
+
+        if (IsTargetInsideAttackHitbox(attackHitbox))
         {
             StopMove();
             Face(target.position.x - transform.position.x);
@@ -50,41 +71,31 @@ public class FlyingMeleeEnemy : EnemyBrainBase
         Face(direction.x);
     }
 
-    // 비행형 몬스터는 지형 충돌로 멈추면 추격감이 깨지므로 몸통 콜라이더를 트리거로 돌린다.
-    private void SetBodyCollidersTrigger()
-    {
-        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
-        for (int i = 0; i < colliders.Length; i++)
-        {
-            Collider2D targetCollider = colliders[i];
-            if (targetCollider == null || targetCollider.GetComponent<Hitbox>() != null)
-                continue;
-
-            targetCollider.isTrigger = true;
-        }
-    }
-
     private void TryAttack()
     {
         if (Time.time < nextAttackTime || attackData == null || attackHitbox == null)
             return;
 
         nextAttackTime = Time.time + attackCooldown;
-        StartCoroutine(CoAttack());
-    }
-
-    private IEnumerator CoAttack()
-    {
         state = EnemyState.Attack;
+        attackEndTime = Time.time + attackStateDuration;
+
         if (animator != null)
             animator.SetTrigger("Attack");
+    }
 
-        yield return new WaitForSeconds(0.12f);
+    // 공격 애니메이션 이벤트에서 판정이 실제로 닿는 프레임에 호출한다.
+    public void OpenAttackHitbox()
+    {
+        if (state != EnemyState.Attack || attackHitbox == null || attackData == null)
+            return;
+
         attackHitbox.Open(Team.Enemy, attackData);
-        yield return new WaitForSeconds(attackData.activeTime);
-        attackHitbox.Close();
+    }
 
-        state = EnemyState.Chase;
+    public void CloseAttackHitbox()
+    {
+        attackHitbox?.Close();
     }
 
     public override void OnParried(Vector2 parryPoint, Vector2 parryDirection)

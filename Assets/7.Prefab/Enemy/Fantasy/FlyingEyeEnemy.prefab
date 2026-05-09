@@ -59,7 +59,7 @@ Transform:
   m_GameObject: {fileID: 4110219478130531901}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.58, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -109,7 +109,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.9, y: 0.7}
+  m_Size: {x: 0.66, y: 0.37}
   m_EdgeRadius: 0
 --- !u!114 &4088779821639909560
 MonoBehaviour:
@@ -265,8 +265,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyWorldHealthBar
   health: {fileID: 2598734408876540747}
   fillRoot: {fileID: 1128720111786855172}
+  backRoot: {fileID: 462069231773826853}
   barRoot: {fileID: 5919879768511927765}
-  visibleDuration: 1.4
 --- !u!1 &5927535532625921106
 GameObject:
   m_ObjectHideFlags: 0
@@ -278,6 +278,7 @@ GameObject:
   - component: {fileID: 31853660261638419}
   - component: {fileID: 8937265583498075764}
   - component: {fileID: 5050780339812704349}
+  - component: {fileID: 4234053552616542247}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -381,6 +382,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &4234053552616542247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5927535532625921106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36ea7d284aac39743973db6e37e013ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimationEventRelay
+  meleeEnemy: {fileID: 0}
+  flyingEnemy: {fileID: 845416918690933395}
 --- !u!1 &6756365852184156855
 GameObject:
   m_ObjectHideFlags: 0
@@ -484,7 +499,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.05}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -494,7 +509,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.72, y: 0.9}
+  m_Size: {x: 0.28, y: 0.31}
   m_EdgeRadius: 0
 --- !u!114 &2598734408876540747
 MonoBehaviour:
@@ -539,8 +554,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyContactDamage
   damage: 5
   knockback: {x: 4, y: 2}
+  disableContactKnockback: 1
   hitStopTime: 0.03
   damageCooldown: 0.65
+  contactArea: {fileID: 0}
 --- !u!114 &1483071203150255396
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -596,6 +613,12 @@ MonoBehaviour:
   detectRange: 9
   attackRange: 0.48
   moveSpeed: 2.25
+  patrolWhenIdle: 1
+  patrolSpeedMultiplier: 0.55
+  patrolWallCheckDistance: 0.35
+  patrolEdgeCheckForward: 0.42
+  patrolEdgeCheckDown: 0.95
+  patrolTurnCooldown: 0.25
   groundMask:
     serializedVersion: 2
     m_Bits: 0
@@ -603,12 +626,14 @@ MonoBehaviour:
   groundCheckDistance: 0.7
   obstacleCheckDistance: 0.45
   targetHeightJumpThreshold: 0.55
+  minPlatformJumpHeight: 1.1
   jumpCooldown: 0.65
   blockedStopTime: 0.2
   attackHitbox: {fileID: 4088779821639909560}
   attackData: {fileID: 11400000, guid: 3a326ae70a3df6b48a17b3bc79222239, type: 2}
   attackCooldown: 0.9
   hoverHeightOffset: 0.15
+  attackStateDuration: 0.55
 --- !u!1 &9165067885472418601
 GameObject:
   m_ObjectHideFlags: 0
