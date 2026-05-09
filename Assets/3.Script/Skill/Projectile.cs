@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
-public class Projectile : MonoBehaviour, IPoolable
+public class Projectile : MonoBehaviour, IPoolable, IParryReactable
 {
     [SerializeField] private float speed = 12f;
     [SerializeField] private float lifeTime = 2f;
@@ -33,8 +33,16 @@ public class Projectile : MonoBehaviour, IPoolable
         if (!other.TryGetComponent(out Hurtbox hurtbox)) return;
 
         DamageInfo info = new DamageInfo(ownerTeam, attackData.damage, other.ClosestPoint(transform.position), attackData.knockback, attackData.hitStopTime);
-        if (hurtbox.ApplyDamage(info))
+        if (hurtbox.ApplyDamage(info, this))
             Release();
+    }
+
+    public void OnParried(Vector2 parryPoint, Vector2 parryDirection)
+    {
+        ownerTeam = Team.Player;
+        direction = -direction;
+        transform.position = parryPoint + direction * 0.25f;
+        despawnTime = Time.time + lifeTime;
     }
 
     public void OnSpawned()

@@ -9,6 +9,7 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField] private Animator animator;
 
     private bool isAttacking;
+    private int basicAttackStep;
 
     private void Reset()
     {
@@ -39,8 +40,11 @@ public class PlayerCombat : MonoBehaviour
     private IEnumerator CoBasicAttack()
     {
         isAttacking = true;
+        string attackTrigger = basicAttackStep % 2 == 0 ? "Attack1" : "Attack2";
+        basicAttackStep++;
+
         if (animator != null)
-            animator.SetTrigger("Attack");
+            animator.SetTrigger(attackTrigger);
 
         basicAttackHitbox.Open(Team.Player, basicAttack);
         yield return new WaitForSeconds(basicAttack.activeTime);

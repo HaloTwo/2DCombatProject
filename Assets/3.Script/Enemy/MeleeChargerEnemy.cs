@@ -50,4 +50,10 @@ public class MeleeChargerEnemy : EnemyBrainBase
 
         state = EnemyState.Chase;
     }
+
+    public override void OnParried(Vector2 parryPoint, Vector2 parryDirection)
+    {
+        attackHitbox?.ForceClose();
+        base.OnParried(parryPoint, parryDirection);
+    }
 }

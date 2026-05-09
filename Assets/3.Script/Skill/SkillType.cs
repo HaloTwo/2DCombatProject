@@ -2,5 +2,8 @@ public enum SkillType
 {
     DashAttack,
     AreaAttack,
-    Projectile
+    Projectile,
+    RisingSlash,
+    GroundSlam,
+    BackStepShot
 }

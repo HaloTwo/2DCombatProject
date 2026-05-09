@@ -11,6 +11,7 @@ public class PlayerInputReader : MonoBehaviour
     private InputAction attackAction;
     private InputAction skillOneAction;
     private InputAction skillTwoAction;
+    private InputAction blockAction;
     private InputAction interactAction;
 
     private float lastLeftTapTime = -999f;
@@ -23,6 +24,9 @@ public class PlayerInputReader : MonoBehaviour
     public bool AttackPressed { get; private set; }
     public bool SkillOnePressed { get; private set; }
     public bool SkillTwoPressed { get; private set; }
+    public bool BlockPressed { get; private set; }
+    public bool BlockHeld { get; private set; }
+    public bool BlockReleased { get; private set; }
     public bool InteractPressed { get; private set; }
 
     private void Awake()
@@ -38,6 +42,7 @@ public class PlayerInputReader : MonoBehaviour
         attackAction.Enable();
         skillOneAction.Enable();
         skillTwoAction.Enable();
+        blockAction.Enable();
         interactAction.Enable();
     }
 
@@ -49,6 +54,7 @@ public class PlayerInputReader : MonoBehaviour
         attackAction.Disable();
         skillOneAction.Disable();
         skillTwoAction.Disable();
+        blockAction.Disable();
         interactAction.Disable();
     }
 
@@ -61,6 +67,9 @@ public class PlayerInputReader : MonoBehaviour
         AttackPressed = attackAction.WasPressedThisFrame();
         SkillOnePressed = skillOneAction.WasPressedThisFrame();
         SkillTwoPressed = skillTwoAction.WasPressedThisFrame();
+        BlockPressed = blockAction.WasPressedThisFrame();
+        BlockHeld = blockAction.IsPressed();
+        BlockReleased = blockAction.WasReleasedThisFrame();
         InteractPressed = interactAction.WasPressedThisFrame();
     }
 
@@ -95,6 +104,10 @@ public class PlayerInputReader : MonoBehaviour
         skillTwoAction = new InputAction("SkillTwo", InputActionType.Button);
         skillTwoAction.AddBinding("<Keyboard>/s");
         skillTwoAction.AddBinding("<Gamepad>/rightShoulder");
+
+        blockAction = new InputAction("Block", InputActionType.Button);
+        blockAction.AddBinding("<Keyboard>/x");
+        blockAction.AddBinding("<Gamepad>/leftTrigger");
 
         interactAction = new InputAction("Interact", InputActionType.Button);
         interactAction.AddBinding("<Keyboard>/upArrow");

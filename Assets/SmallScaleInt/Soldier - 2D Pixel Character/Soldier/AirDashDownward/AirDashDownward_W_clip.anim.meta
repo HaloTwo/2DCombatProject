@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 427a442c9b3a27e4faa2b576e53b3136
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Soldier/AirDashDownward/AirDashDownward_W_clip.anim
+  uploadId: 659632

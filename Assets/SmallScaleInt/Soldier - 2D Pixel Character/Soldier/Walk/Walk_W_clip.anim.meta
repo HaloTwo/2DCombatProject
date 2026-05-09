@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 81f011e7dd88d904683807f948e5af27
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Soldier/Walk/Walk_W_clip.anim
+  uploadId: 659632

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 262e59650f8b6084cb2846378b5203c0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Soldier/CrouchRun/CrouchRun_E_clip.anim
+  uploadId: 659632

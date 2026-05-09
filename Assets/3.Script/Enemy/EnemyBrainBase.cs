@@ -2,7 +2,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Health))]
-public abstract class EnemyBrainBase : MonoBehaviour
+public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
 {
     [SerializeField] protected Rigidbody2D rb;
     [SerializeField] protected Health health;
@@ -17,6 +17,7 @@ public abstract class EnemyBrainBase : MonoBehaviour
     protected Transform target;
     protected EnemyState state = EnemyState.Idle;
     protected float facing = 1f;
+    protected float stunEndTime;
 
     protected virtual void Reset()
     {
@@ -47,6 +48,13 @@ public abstract class EnemyBrainBase : MonoBehaviour
     {
         if (state == EnemyState.Dead)
             return;
+
+        if (Time.time < stunEndTime)
+        {
+            StopMove();
+            UpdateAnimator();
+            return;
+        }
 
         ResolveTarget();
         TickState();
@@ -118,6 +126,16 @@ public abstract class EnemyBrainBase : MonoBehaviour
         state = EnemyState.Dead;
         StopMove();
         gameObject.SetActive(false);
+    }
+
+    public virtual void OnParried(Vector2 parryPoint, Vector2 parryDirection)
+    {
+        stunEndTime = Time.time + 0.45f;
+        state = EnemyState.Hit;
+        rb.linearVelocity = new Vector2(parryDirection.x * 8f, 3.5f);
+
+        if (animator != null)
+            animator.SetTrigger("Hurt");
     }
 
     private void UpdateAnimator()

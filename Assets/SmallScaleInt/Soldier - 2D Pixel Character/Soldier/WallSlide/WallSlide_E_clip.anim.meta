@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d108c8e157541354dadb5c57ed693784
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Soldier/WallSlide/WallSlide_E_clip.anim
+  uploadId: 659632

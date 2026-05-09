@@ -10,6 +10,7 @@ public class PlayerSkillController : MonoBehaviour
     [SerializeField] private Transform projectileSpawnPoint;
     [SerializeField] private SkillData skillOne;
     [SerializeField] private SkillData skillTwo;
+    [SerializeField] private SkillData[] availableSkills;
 
     private float nextSkillOneTime;
     private float nextSkillTwoTime;
@@ -17,6 +18,7 @@ public class PlayerSkillController : MonoBehaviour
 
     public SkillData SkillOne => skillOne;
     public SkillData SkillTwo => skillTwo;
+    public SkillData[] AvailableSkills => availableSkills;
 
     private void Reset()
     {
@@ -62,6 +64,15 @@ public class PlayerSkillController : MonoBehaviour
             case SkillType.Projectile:
                 FireProjectile(skill);
                 break;
+            case SkillType.RisingSlash:
+                StartCoroutine(CoRisingSlash(skill));
+                break;
+            case SkillType.GroundSlam:
+                StartCoroutine(CoGroundSlam(skill));
+                break;
+            case SkillType.BackStepShot:
+                StartCoroutine(CoBackStepShot(skill));
+                break;
         }
     }
 
@@ -99,6 +110,58 @@ public class PlayerSkillController : MonoBehaviour
         yield return new WaitForSeconds(skill.duration);
 
         skillHitbox?.Close();
+        isUsingSkill = false;
+    }
+
+    // 전방 판정과 상승 이동을 동시에 주는 띄우기 계열 스킬이다.
+    private IEnumerator CoRisingSlash(SkillData skill)
+    {
+        isUsingSkill = true;
+        float facing = movement != null ? movement.Facing : Mathf.Sign(transform.localScale.x);
+
+        if (rb != null)
+            rb.linearVelocity = new Vector2(facing * skill.force * 0.35f, skill.force * 0.55f);
+
+        if (skillHitbox != null && skill.attackData != null)
+            skillHitbox.Open(Team.Player, skill.attackData);
+
+        yield return new WaitForSeconds(skill.duration);
+
+        skillHitbox?.Close();
+        isUsingSkill = false;
+    }
+
+    // 공중에서 바닥으로 찍고 착지 전후 넓은 판정을 열어 군중 제어 느낌을 만든다.
+    private IEnumerator CoGroundSlam(SkillData skill)
+    {
+        isUsingSkill = true;
+
+        if (rb != null)
+            rb.linearVelocity = new Vector2(0f, -Mathf.Abs(skill.force));
+
+        yield return new WaitForSeconds(skill.duration * 0.45f);
+
+        if (skillHitbox != null && skill.attackData != null)
+            skillHitbox.Open(Team.Player, skill.attackData);
+
+        yield return new WaitForSeconds(skill.duration * 0.55f);
+
+        skillHitbox?.Close();
+        isUsingSkill = false;
+    }
+
+    // 뒤로 빠지면서 투사체를 발사해 근접/원거리 리듬을 섞는다.
+    private IEnumerator CoBackStepShot(SkillData skill)
+    {
+        isUsingSkill = true;
+        float facing = movement != null ? movement.Facing : Mathf.Sign(transform.localScale.x);
+
+        if (rb != null)
+            rb.linearVelocity = new Vector2(-facing * Mathf.Abs(skill.force), rb.linearVelocity.y);
+
+        FireProjectile(skill);
+        yield return new WaitForSeconds(skill.duration);
+
         isUsingSkill = false;
     }
 

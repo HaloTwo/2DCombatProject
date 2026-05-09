@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e24137484c0650446be2096cd9e69aa0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Example scene/Props/AoE/PhysicalAoE/PhysicalAoE.anim
+  uploadId: 659632

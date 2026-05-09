@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6b526a6a22399344cb18f023ceee6d2c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Soldier/DashBackward/DashBackward_W_clip.anim
+  uploadId: 659632

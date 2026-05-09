@@ -294,6 +294,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
   health: {fileID: 2777257206800214256}
+  guard: {fileID: 0}
 --- !u!114 &9069068622427215231
 MonoBehaviour:
   m_ObjectHideFlags: 0

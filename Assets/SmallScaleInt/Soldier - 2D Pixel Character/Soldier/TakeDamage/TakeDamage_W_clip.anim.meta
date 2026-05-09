@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5929f02bdbac0674891cc8d01d31fbc6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Soldier/TakeDamage/TakeDamage_W_clip.anim
+  uploadId: 659632

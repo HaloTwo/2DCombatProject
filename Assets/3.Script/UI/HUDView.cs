@@ -5,6 +5,7 @@ public class HUDView : MonoBehaviour
 {
     [SerializeField] private Health playerHealth;
     [SerializeField] private Slider hpSlider;
+    [SerializeField] private Text hpText;
 
     private void OnEnable()
     {
@@ -32,5 +33,8 @@ public class HUDView : MonoBehaviour
     {
         if (playerHealth == null || hpSlider == null) return;
         hpSlider.value = playerHealth.MaxHp <= 0f ? 0f : playerHealth.CurrentHp / playerHealth.MaxHp;
+
+        if (hpText != null)
+            hpText.text = $"{Mathf.CeilToInt(playerHealth.CurrentHp)} / {Mathf.CeilToInt(playerHealth.MaxHp)}";
     }
 }

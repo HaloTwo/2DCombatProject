@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e5f6dcf9e33fd1f499d7247083aa7db9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 7400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Soldier/SlideStart/SlideStart_W_clip.anim
+  uploadId: 659632

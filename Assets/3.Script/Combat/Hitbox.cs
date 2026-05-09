@@ -55,7 +55,12 @@ public class Hitbox : MonoBehaviour
 
         // 데미지, 넉백, 히트스톱을 하나로 묶어 피격 대상에게 전달한다.
         DamageInfo info = new DamageInfo(ownerTeam, attackData.damage, hitPoint, knockback, attackData.hitStopTime);
-        if (hurtbox.ApplyDamage(info))
+        if (hurtbox.ApplyDamage(info, this))
             hitTargets.Add(hurtbox.Health);
+    }
+
+    public void ForceClose()
+    {
+        Close();
     }
 }

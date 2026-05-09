@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5e2e6272bb3ba5c4783ac01d6cb0ddce
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282155
+  packageName: Pixel Soldier - Animated 2D pixel Character
+  packageVersion: 1.1.0
+  assetPath: Assets/SmallScaleInt/Soldier - 2D Pixel Character/Example scene/Props/AoE/PhysicalAoEPrefab.prefab
+  uploadId: 659632
