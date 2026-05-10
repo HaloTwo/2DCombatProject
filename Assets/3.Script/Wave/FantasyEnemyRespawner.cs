@@ -49,6 +49,10 @@ public class FantasyEnemyRespawner : MonoBehaviour
             return;
 
         health.ResetHealth();
+        EnemyWorldHealthBar[] healthBars = enemy.GetComponentsInChildren<EnemyWorldHealthBar>(true);
+        for (int i = 0; i < healthBars.Length; i++)
+            healthBars[i].ForceShow();
+
         health.OnDead -= HandleEnemyDead;
         health.OnDead += HandleEnemyDead;
         aliveEnemies.Add(health);

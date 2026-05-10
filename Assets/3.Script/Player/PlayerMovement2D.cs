@@ -1,38 +1,42 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement2D : MonoBehaviour
 {
-    [SerializeField] private PlayerInputReader input;
-    [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private Health health;
-    [SerializeField] private Transform groundCheck;
-    [SerializeField] private LayerMask groundMask;
+    [SerializeField, KoreanLabel("입력 리더")] private PlayerInputReader input;
+    [SerializeField, KoreanLabel("리지드바디")] private Rigidbody2D rb;
+    [SerializeField, KoreanLabel("체력")] private Health health;
+    [SerializeField, KoreanLabel("바닥 체크 위치")] private Transform groundCheck;
+    [SerializeField, KoreanLabel("지형 레이어")] private LayerMask groundMask;
 
-    [Header("Move")]
-    [SerializeField] private float moveSpeed = 6.5f;
-    [SerializeField] private float jumpPower = 8.5f;
-    [SerializeField] private int maxJumpCount = 2;
-    [SerializeField] private float coyoteTime = 0.1f;
-    [SerializeField] private float jumpBufferTime = 0.1f;
-    [SerializeField] private Vector2 groundCheckSize = new Vector2(0.58f, 0.08f);
-    [SerializeField] private float groundCheckDistance = 0.12f;
-    [SerializeField] private float minGroundNormalY = 0.65f;
-    [SerializeField] private float groundContactGraceTime = 0.08f;
-    [SerializeField] private Vector2 wallCheckSize = new Vector2(0.68f, 1.05f);
-    [SerializeField] private float wallCheckDistance = 0.08f;
-    [SerializeField] private float minWallNormalX = 0.65f;
+    [Header("이동")]
+    [SerializeField, KoreanLabel("이동 속도")] private float moveSpeed = 6.5f;
+    [SerializeField, KoreanLabel("점프 힘")] private float jumpPower = 8.5f;
+    [SerializeField, KoreanLabel("최대 점프 횟수")] private int maxJumpCount = 2;
+    [SerializeField, KoreanLabel("코요테 타임")] private float coyoteTime = 0.1f;
+    [SerializeField, KoreanLabel("점프 입력 버퍼")] private float jumpBufferTime = 0.1f;
+    [SerializeField, KoreanLabel("바닥 체크 크기")] private Vector2 groundCheckSize = new Vector2(0.58f, 0.08f);
+    [SerializeField, KoreanLabel("바닥 체크 거리")] private float groundCheckDistance = 0.12f;
+    [SerializeField, KoreanLabel("바닥 판정 최소 노멀 Y")] private float minGroundNormalY = 0.65f;
+    [SerializeField, KoreanLabel("바닥 접촉 유지 시간")] private float groundContactGraceTime = 0.08f;
+    [SerializeField, KoreanLabel("벽 체크 크기")] private Vector2 wallCheckSize = new Vector2(0.68f, 1.05f);
+    [SerializeField, KoreanLabel("벽 체크 거리")] private float wallCheckDistance = 0.08f;
+    [SerializeField, KoreanLabel("벽 판정 최소 노멀 X")] private float minWallNormalX = 0.65f;
 
-    [Header("Dash")]
-    [SerializeField] private float dashPower = 13f;
-    [SerializeField] private float dashDuration = 0.13f;
-    [SerializeField] private float dashCooldown = 0.3f;
+    [Header("대시")]
+    [SerializeField, KoreanLabel("대시 힘")] private float dashPower = 13f;
+    [SerializeField, KoreanLabel("대시 지속 시간")] private float dashDuration = 0.13f;
+    [SerializeField, KoreanLabel("대시 쿨타임")] private float dashCooldown = 0.3f;
 
-    [Header("Hit Stun")]
-    [SerializeField] private float hitStunDuration = 0.18f;
-    [SerializeField] private float damageInvincibleDuration = 0.65f;
+    [Header("원웨이 플랫폼")]
+    [SerializeField, KoreanLabel("플랫폼 내려오기 충돌 무시 시간")] private float platformDropDuration = 0.28f;
+    [SerializeField, KoreanLabel("플랫폼 내려오기 속도")] private float platformDropVelocity = -3.5f;
+
+    [Header("피격")]
+    [SerializeField, KoreanLabel("피격 경직 시간")] private float hitStunDuration = 0.18f;
+    [SerializeField, KoreanLabel("피격 무적 시간")] private float damageInvincibleDuration = 0.65f;
 
     private float facing = 1f;
     private float lastGroundedTime;
@@ -40,8 +44,13 @@ public class PlayerMovement2D : MonoBehaviour
     private float lastJumpPressedTime;
     private float nextDashTime;
     private float controlLockedUntilTime;
+    private float moveSpeedMultiplier = 1f;
+    private Coroutine speedBuffRoutine;
+    private Coroutine attackStepRoutine;
     private int jumpCount;
     private bool isDashing;
+    private bool isAttackStepping;
+    private Collider2D currentOneWayPlatform;
     private Collider2D[] ownColliders;
     private PhysicsMaterial2D noFrictionMaterial;
     private readonly List<ColliderPair> ignoredDashCollisions = new();
@@ -86,6 +95,9 @@ public class PlayerMovement2D : MonoBehaviour
         if (IsControlLocked())
             return;
 
+        if (input != null && input.JumpPressed && input.Move.y < -0.5f && TryDropThroughPlatform())
+            return;
+
         if (input != null && input.DashPressed)
             TryDash();
 
@@ -97,6 +109,9 @@ public class PlayerMovement2D : MonoBehaviour
     {
         if (isDashing || input == null) return;
 
+        if (isAttackStepping)
+            return;
+
         if (IsControlLocked())
         {
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
@@ -107,10 +122,84 @@ public class PlayerMovement2D : MonoBehaviour
         if (IsBlockedHorizontally(moveX))
             moveX = 0f;
 
-        rb.linearVelocity = new Vector2(moveX * moveSpeed, rb.linearVelocity.y);
+        rb.linearVelocity = new Vector2(moveX * moveSpeed * moveSpeedMultiplier, rb.linearVelocity.y);
     }
 
-    // 지상 점프와 공중 2단 점프를 분리해서 점프 입력이 과하게 튀지 않게 처리한다.
+    // 공격 모션 중 플레이어 입력을 잠그고, 공격 연출이 끊기지 않도록 현재 수평 속도를 정리한다.
+    public void LockMovementFor(float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        controlLockedUntilTime = Mathf.Max(controlLockedUntilTime, Time.time + duration);
+        if (!isDashing && !isAttackStepping && rb != null)
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+    }
+
+    // 평타 1타/2타에서 짧게 앞으로 밀어주는 연출용 이동이다. 일반 이동 잠금과 별도로 FixedUpdate 덮어쓰기를 피한다.
+    public void ApplyAttackStep(float speed, float duration)
+    {
+        if (speed <= 0f || duration <= 0f || rb == null || isDashing)
+            return;
+
+        if (attackStepRoutine != null)
+            StopCoroutine(attackStepRoutine);
+
+        attackStepRoutine = StartCoroutine(CoAttackStep(speed, duration));
+    }
+
+    public void StopAttackStep()
+    {
+        if (attackStepRoutine != null)
+        {
+            StopCoroutine(attackStepRoutine);
+            attackStepRoutine = null;
+        }
+
+        isAttackStepping = false;
+        if (!isDashing && rb != null)
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+    }
+
+    // 버프 아이템에서 호출한다. 기존 버프가 남아있으면 새 지속 시간과 배율로 교체한다.
+    public void SetTemporaryMoveSpeedMultiplier(float multiplier, float duration)
+    {
+        if (duration <= 0f)
+            return;
+
+        if (speedBuffRoutine != null)
+            StopCoroutine(speedBuffRoutine);
+
+        speedBuffRoutine = StartCoroutine(CoMoveSpeedBuff(Mathf.Max(0.1f, multiplier), duration));
+    }
+
+    private IEnumerator CoMoveSpeedBuff(float multiplier, float duration)
+    {
+        moveSpeedMultiplier = multiplier;
+        yield return new WaitForSeconds(duration);
+        moveSpeedMultiplier = 1f;
+        speedBuffRoutine = null;
+    }
+
+    private IEnumerator CoAttackStep(float speed, float duration)
+    {
+        isAttackStepping = true;
+        float endTime = Time.time + duration;
+
+        while (Time.time < endTime && !isDashing)
+        {
+            rb.linearVelocity = new Vector2(facing * speed, rb.linearVelocity.y);
+            yield return new WaitForFixedUpdate();
+        }
+
+        if (!isDashing && rb != null)
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+
+        isAttackStepping = false;
+        attackStepRoutine = null;
+    }
+
+    // 점프 입력 버퍼와 코요테 타임을 처리하고, 지상 점프와 공중 점프를 분리한다.
     private void TryJump()
     {
         bool hasBufferedJump = Time.time - lastJumpPressedTime <= jumpBufferTime;
@@ -157,6 +246,7 @@ public class PlayerMovement2D : MonoBehaviour
         isDashing = false;
     }
 
+    // 박스캐스트와 겹침 검사를 함께 사용해 One-Way 플랫폼 위에서도 안정적으로 접지 상태를 유지한다.
     private void UpdateGrounded()
     {
         Vector2 checkPos = groundCheck != null ? groundCheck.position : transform.position;
@@ -184,15 +274,24 @@ public class PlayerMovement2D : MonoBehaviour
 
     private bool HasGroundOverlap(Vector2 checkPos)
     {
-        Collider2D[] overlaps = Physics2D.OverlapBoxAll(checkPos, groundCheckSize, 0f, groundMask);
+        Collider2D[] overlaps = Physics2D.OverlapBoxAll(checkPos, groundCheckSize, 0f);
         for (int i = 0; i < overlaps.Length; i++)
         {
             Collider2D overlap = overlaps[i];
             if (overlap == null || overlap.isTrigger || IsOwnCollider(overlap) || IsEnemyCollider(overlap))
                 continue;
 
-            if (IsOneWayPlatform(overlap) && rb != null && rb.linearVelocity.y > 0.05f)
+            bool isOneWay = IsOneWayPlatform(overlap);
+            if (!isOneWay)
+            {
+                int targetMask = 1 << overlap.gameObject.layer;
+                if ((groundMask.value & targetMask) == 0)
+                    continue;
+            }
+            else if (rb != null && rb.linearVelocity.y > 0.05f)
+            {
                 continue;
+            }
 
             return true;
         }
@@ -213,12 +312,19 @@ public class PlayerMovement2D : MonoBehaviour
 
             lastGroundContactTime = Time.time;
             IsGrounded = true;
+            if (IsOneWayPlatform(collision.collider))
+                currentOneWayPlatform = collision.collider;
             return;
         }
     }
 
-    // 벽/계단 블록 옆면으로 계속 밀어 넣으면 2D 물리 마찰 때문에 공중에서도 붙는 느낌이 난다.
-    // 이동 적용 직전에 옆면 접촉 방향 입력만 잘라서 벽 타기처럼 보이는 현상을 막는다.
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.collider == currentOneWayPlatform)
+            currentOneWayPlatform = null;
+    }
+
+    // 수평 이동 방향을 실제로 막는 벽만 차단한다. 뒤쪽 벽이나 코너 겹침 때문에 이동이 멈추지 않게 한다.
     private bool IsBlockedHorizontally(float moveX)
     {
         if (Mathf.Abs(moveX) < 0.01f)
@@ -234,7 +340,7 @@ public class PlayerMovement2D : MonoBehaviour
             if (hit.collider == null || hit.collider.isTrigger || IsOwnCollider(hit.collider) || IsEnemyCollider(hit.collider) || IsOneWayPlatform(hit.collider))
                 continue;
 
-            if (Mathf.Abs(hit.normal.x) < minWallNormalX)
+            if (Vector2.Dot(hit.normal, direction) > -minWallNormalX)
                 continue;
 
             return true;
@@ -256,12 +362,51 @@ public class PlayerMovement2D : MonoBehaviour
         if (target == null || target.isTrigger || IsOwnCollider(target) || IsEnemyCollider(target))
             return false;
 
+        if (IsOneWayPlatform(target))
+            return true;
+
         int targetMask = 1 << target.gameObject.layer;
         return (groundMask.value & targetMask) != 0;
     }
 
-    // 캐릭터 몸체 콜라이더는 벽과 마찰이 생기면 점프 중 옆면에 달라붙기 쉽다.
-    // 트리거 히트박스는 공격 판정용이므로 물리 재질을 건드리지 않는다.
+    // 아래 입력과 점프를 같이 눌렀을 때 현재 밟은 One-Way 플랫폼을 잠깐 통과한다.
+    private bool TryDropThroughPlatform()
+    {
+        if (!IsGrounded || currentOneWayPlatform == null || ownColliders == null)
+            return false;
+
+        StartCoroutine(CoDropThroughPlatform(currentOneWayPlatform));
+        lastJumpPressedTime = -999f;
+        return true;
+    }
+
+    private IEnumerator CoDropThroughPlatform(Collider2D platform)
+    {
+        if (platform == null)
+            yield break;
+
+        for (int i = 0; i < ownColliders.Length; i++)
+        {
+            if (ownColliders[i] != null && !ownColliders[i].isTrigger)
+                Physics2D.IgnoreCollision(ownColliders[i], platform, true);
+        }
+
+        currentOneWayPlatform = null;
+        IsGrounded = false;
+        lastGroundedTime = -999f;
+        lastGroundContactTime = -999f;
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, platformDropVelocity);
+
+        yield return new WaitForSeconds(platformDropDuration);
+
+        for (int i = 0; i < ownColliders.Length; i++)
+        {
+            if (ownColliders[i] != null && platform != null && !ownColliders[i].isTrigger)
+                Physics2D.IgnoreCollision(ownColliders[i], platform, false);
+        }
+    }
+
+    // 마찰 때문에 벽이나 블록 모서리에 붙는 느낌을 줄이기 위해 캐릭터 몸체 콜라이더에 무마찰 재질을 적용한다.
     private void ApplyNoFrictionMaterial()
     {
         if (ownColliders == null)
@@ -356,7 +501,7 @@ public class PlayerMovement2D : MonoBehaviour
         return targetHealth != null && targetHealth.Team == Team.Enemy;
     }
 
-    // 피격 직후에는 이동/점프/대시 입력을 잠깐 막아서 맞는 느낌과 판정 피드백을 분리한다.
+    // 피격 직후에는 입력 경직과 무적 시간을 적용해 몸박/공격 중복 데미지를 막는다.
     private void HandleDamaged(Health damaged, DamageInfo info)
     {
         if (damageInvincibleDuration > 0f)

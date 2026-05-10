@@ -13,6 +13,7 @@ public class PlayerInputReader : MonoBehaviour
     private InputAction skillTwoAction;
     private InputAction blockAction;
     private InputAction interactAction;
+    private InputAction focusAction;
 
     private float lastLeftTapTime = -999f;
     private float lastRightTapTime = -999f;
@@ -28,6 +29,7 @@ public class PlayerInputReader : MonoBehaviour
     public bool BlockHeld { get; private set; }
     public bool BlockReleased { get; private set; }
     public bool InteractPressed { get; private set; }
+    public bool FocusPressed { get; private set; }
 
     private void Awake()
     {
@@ -44,6 +46,7 @@ public class PlayerInputReader : MonoBehaviour
         skillTwoAction.Enable();
         blockAction.Enable();
         interactAction.Enable();
+        focusAction.Enable();
     }
 
     private void OnDisable()
@@ -56,6 +59,7 @@ public class PlayerInputReader : MonoBehaviour
         skillTwoAction.Disable();
         blockAction.Disable();
         interactAction.Disable();
+        focusAction.Disable();
     }
 
     private void Update()
@@ -71,6 +75,7 @@ public class PlayerInputReader : MonoBehaviour
         BlockHeld = blockAction.IsPressed();
         BlockReleased = blockAction.WasReleasedThisFrame();
         InteractPressed = interactAction.WasPressedThisFrame();
+        FocusPressed = focusAction.WasPressedThisFrame();
     }
 
     // New Input System Action을 코드에서 구성해 키보드와 게임패드를 같은 입력 흐름으로 처리한다.
@@ -113,6 +118,10 @@ public class PlayerInputReader : MonoBehaviour
         interactAction.AddBinding("<Keyboard>/upArrow");
         interactAction.AddBinding("<Keyboard>/e");
         interactAction.AddBinding("<Gamepad>/buttonNorth");
+
+        focusAction = new InputAction("Focus", InputActionType.Button);
+        focusAction.AddBinding("<Keyboard>/v");
+        focusAction.AddBinding("<Gamepad>/rightStickPress");
     }
 
     // 방향 입력을 짧게 두 번 넣으면 키보드/패드 모두 회피 입력으로 처리한다.

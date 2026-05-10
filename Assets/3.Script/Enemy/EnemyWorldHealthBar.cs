@@ -1,36 +1,54 @@
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
+[ExecuteAlways]
 public class EnemyWorldHealthBar : MonoBehaviour
 {
-    [SerializeField] private Health health;
-    [SerializeField] private Transform fillRoot;
-    [SerializeField] private Transform backRoot;
-    [SerializeField] private GameObject barRoot;
+    [Header("체력바 UI")]
+    [SerializeField, KoreanLabel("대상 체력")] private Health health;
+    [SerializeField, KoreanLabel("체력바 루트")] private GameObject barRoot;
+    [SerializeField, KoreanLabel("월드 캔버스")] private Canvas canvas;
+    [SerializeField, KoreanLabel("체력 Fill 이미지")] private Image fillImage;
+    [SerializeField, KoreanLabel("체력 Back 이미지")] private Image backImage;
+    [SerializeField, KoreanLabel("사망 시 숨김")] private bool hideOnDead = true;
 
-    private Vector3 baseFillScale;
-    private Vector3 baseFillPosition;
-    private SpriteRenderer fillRenderer;
-    private SpriteRenderer backRenderer;
-    private bool hasBaseFillTransform;
+    [Header("회전 보정")]
+    [SerializeField, KoreanLabel("월드 회전 고정")] private bool keepWorldRotation = true;
+    [SerializeField, KoreanLabel("부모 반전 보정")] private bool counterParentFlip = true;
+
+    private Graphic[] graphics;
+    private Vector3 baseLocalScale;
+    private bool hasBaseLocalScale;
 
     private void Awake()
     {
-        if (health == null) health = GetComponentInParent<Health>();
-        if (barRoot == null) barRoot = gameObject;
-        if (backRoot == null) backRoot = transform.Find("Back");
-        if (fillRoot == null) fillRoot = transform.Find("FillAnchor/Fill");
-        CacheFillTransform();
-
+        CacheBaseTransform();
+        BindReferences();
         Refresh();
         Show();
     }
 
+    private void OnValidate()
+    {
+        CacheBaseTransform();
+        BindReferences();
+        Refresh();
+        StabilizeCanvasTransform();
+    }
+
     private void OnEnable()
     {
+        if (!Application.isPlaying)
+        {
+            Refresh();
+            return;
+        }
+
         if (health == null)
             return;
 
         health.OnDamaged += HandleDamaged;
+        health.OnChanged += HandleChanged;
         health.OnDead += HandleDead;
         Refresh();
         Show();
@@ -38,12 +56,24 @@ public class EnemyWorldHealthBar : MonoBehaviour
 
     private void OnDisable()
     {
+        if (!Application.isPlaying)
+            return;
+
         if (health == null)
             return;
 
         Hide();
         health.OnDamaged -= HandleDamaged;
+        health.OnChanged -= HandleChanged;
         health.OnDead -= HandleDead;
+    }
+
+    private void LateUpdate()
+    {
+        StabilizeCanvasTransform();
+
+        if (Application.isPlaying)
+            Refresh();
     }
 
     // 체력이 변할 때 월드 공간 체력바를 갱신하고 잠깐 표시한다.
@@ -53,86 +83,145 @@ public class EnemyWorldHealthBar : MonoBehaviour
         Show();
     }
 
+    // 풀링으로 체력이 리셋되거나 값이 바뀔 때 체력바를 즉시 다시 채운다.
+    private void HandleChanged(Health changed)
+    {
+        Refresh();
+        Show();
+    }
+
     private void HandleDead(Health dead)
     {
+        Refresh();
         Hide();
+    }
+
+    // 스폰 시스템이 비활성화된 체력바를 다시 살릴 때 호출한다.
+    public void ForceShow()
+    {
+        if (barRoot != null && !barRoot.activeSelf)
+            barRoot.SetActive(true);
+
+        BindReferences();
+        Refresh();
+        Show();
     }
 
     private void Refresh()
     {
-        if (health == null || fillRoot == null)
+        if (fillImage == null)
             return;
 
-        float rate = health.MaxHp <= 0f ? 0f : Mathf.Clamp01(health.CurrentHp / health.MaxHp);
-        ApplyFillByBack(rate);
+        float rate = !Application.isPlaying || health == null || health.MaxHp <= 0f ? 1f : Mathf.Clamp01(health.CurrentHp / health.MaxHp);
+        fillImage.type = Image.Type.Filled;
+        fillImage.fillMethod = Image.FillMethod.Horizontal;
+        fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+        fillImage.fillAmount = rate;
     }
 
-    // 프리팹에서 잡아둔 Fill의 크기와 위치를 기준으로 보존한다.
-    // 체력 변화 시에는 X 스케일과 X 위치만 조정해서 왼쪽부터 줄어드는 것처럼 보이게 한다.
-    private void ApplyFill(float rate)
+    private void BindReferences()
     {
-        if (!hasBaseFillTransform)
-            CacheFillTransform();
-
-        Vector3 scale = baseFillScale;
-        scale.x = baseFillScale.x * rate;
-        fillRoot.localScale = scale;
-
-        fillRoot.localPosition = baseFillPosition;
-        AlignFillLeftToBackLeft();
+        if (health == null) health = GetComponentInParent<Health>();
+        if (barRoot == null) barRoot = gameObject;
+        if (canvas == null) canvas = GetComponent<Canvas>();
+        if (backImage == null)
+        {
+            Transform back = FindChildRecursive(transform, "Back");
+            if (back != null) backImage = back.GetComponent<Image>();
+        }
+        if (fillImage == null)
+        {
+            Transform fill = FindChildRecursive(transform, "Fill");
+            if (fill != null) fillImage = fill.GetComponent<Image>();
+        }
+        if (graphics == null || graphics.Length == 0) graphics = GetComponentsInChildren<Graphic>(true);
     }
 
-    private void CacheFillTransform()
+    // 비주얼 하위에 체력바가 있어도 부모 회전/좌우 반전을 따라가지 않게 월드 표시 방향을 고정한다.
+    private void StabilizeCanvasTransform()
     {
-        if (fillRoot == null)
+        if (!hasBaseLocalScale)
+            CacheBaseTransform();
+
+        if (keepWorldRotation)
+            transform.rotation = Quaternion.identity;
+
+        if (!counterParentFlip || transform.parent == null)
             return;
 
-        if (fillRenderer == null) fillRenderer = fillRoot.GetComponent<SpriteRenderer>();
-        if (backRenderer == null && backRoot != null) backRenderer = backRoot.GetComponent<SpriteRenderer>();
-
-        baseFillScale = fillRoot.localScale;
-        baseFillPosition = fillRoot.localPosition;
-        hasBaseFillTransform = true;
+        Vector3 parentScale = transform.parent.lossyScale;
+        Vector3 nextScale = baseLocalScale;
+        nextScale.x = Mathf.Abs(baseLocalScale.x) * SignOrOne(parentScale.x);
+        nextScale.y = Mathf.Abs(baseLocalScale.y) * SignOrOne(parentScale.y);
+        transform.localScale = nextScale;
     }
 
-    private void AlignFillLeftToBackLeft()
+    private void CacheBaseTransform()
     {
-        if (fillRenderer == null || backRenderer == null)
+        if (hasBaseLocalScale)
             return;
 
-        float deltaX = backRenderer.bounds.min.x - fillRenderer.bounds.min.x;
-        fillRoot.position += new Vector3(deltaX, 0f, 0f);
+        baseLocalScale = transform.localScale;
+        hasBaseLocalScale = true;
     }
 
-    // Back과 같은 높이/폭을 기준으로 Fill을 왼쪽부터 채운다.
-    // 프리팹에 저장된 Fill 크기가 틀어져 있어도 여기서 매번 Back 기준으로 강제 보정한다.
-    private void ApplyFillByBack(float rate)
+    private static float SignOrOne(float value)
     {
-        if (fillRoot == null || backRoot == null)
-            return;
+        return value < 0f ? -1f : 1f;
+    }
 
-        Vector3 backScale = backRoot.localScale;
-        Vector3 backPosition = backRoot.localPosition;
-        Transform fillAnchor = fillRoot.parent;
+    private static Transform FindChildRecursive(Transform root, string childName)
+    {
+        if (root == null)
+            return null;
 
-        if (fillAnchor != null)
-            fillAnchor.localPosition = new Vector3(backPosition.x - backScale.x * 0.5f, backPosition.y, fillAnchor.localPosition.z);
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            if (child.name == childName)
+                return child;
 
-        fillRoot.localScale = new Vector3(backScale.x * rate, backScale.y, backScale.z);
-        fillRoot.localPosition = new Vector3(backScale.x * rate * 0.5f, 0f, fillRoot.localPosition.z);
+            Transform nested = FindChildRecursive(child, childName);
+            if (nested != null)
+                return nested;
+        }
+
+        return null;
     }
 
     private void Show()
     {
-        if (barRoot == null)
-            return;
+        if (barRoot != null && !barRoot.activeSelf)
+            barRoot.SetActive(true);
 
-        barRoot.SetActive(true);
+        if (canvas != null)
+            canvas.enabled = true;
+
+        if (graphics == null || graphics.Length == 0)
+            BindReferences();
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            if (graphics[i] != null)
+                graphics[i].enabled = true;
+        }
     }
 
     private void Hide()
     {
-        if (barRoot != null)
-            barRoot.SetActive(false);
+        if (!hideOnDead)
+            return;
+
+        if (canvas != null)
+            canvas.enabled = false;
+
+        if (graphics == null || graphics.Length == 0)
+            BindReferences();
+
+        for (int i = 0; i < graphics.Length; i++)
+        {
+            if (graphics[i] != null)
+                graphics[i].enabled = false;
+        }
     }
 }

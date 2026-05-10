@@ -16,7 +16,9 @@ public class Health : MonoBehaviour
     public bool IsDead => currentHp <= 0f;
 
     public event Action<Health, DamageInfo> OnDamaged;
+    public event Action<Health> OnChanged;
     public event Action<Health> OnDead;
+    public static event Action<Health> OnAnyDead;
 
     private void Awake()
     {
@@ -28,6 +30,7 @@ public class Health : MonoBehaviour
     {
         currentHp = maxHp;
         invincibleEndTime = 0f;
+        OnChanged?.Invoke(this);
     }
 
     // 모든 공격 판정은 이 함수로 들어오며, 팀 체크와 사망 이벤트를 한 곳에서 관리한다.
@@ -41,11 +44,25 @@ public class Health : MonoBehaviour
         invincibleEndTime = Time.time + invincibleTime;
 
         OnDamaged?.Invoke(this, info);
+        OnChanged?.Invoke(this);
 
         if (currentHp <= 0f)
+        {
             OnDead?.Invoke(this);
+            OnAnyDead?.Invoke(this);
+        }
 
         return true;
+    }
+
+    // 버프 아이템이나 회복 연출에서 사용한다. 사망한 대상은 회복하지 않는다.
+    public void Heal(float amount)
+    {
+        if (amount <= 0f || IsDead)
+            return;
+
+        currentHp = Mathf.Min(maxHp, currentHp + amount);
+        OnChanged?.Invoke(this);
     }
 
     public void SetInvincibleFor(float duration)

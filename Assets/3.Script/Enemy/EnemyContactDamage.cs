@@ -2,12 +2,13 @@
 
 public class EnemyContactDamage : MonoBehaviour
 {
-    [SerializeField] private float damage = 5f;
-    [SerializeField] private Vector2 knockback = new Vector2(0.4f, 0.2f);
-    [SerializeField] private bool disableContactKnockback = true;
-    [SerializeField] private float hitStopTime = 0.03f;
-    [SerializeField] private float damageCooldown = 0.65f;
-    [SerializeField] private Collider2D contactArea;
+    [Header("몸박 데미지")]
+    [SerializeField, KoreanLabel("몸박 데미지")] private float damage = 5f;
+    [SerializeField, KoreanLabel("몸박 넉백")] private Vector2 knockback = new Vector2(0.4f, 0.2f);
+    [SerializeField, KoreanLabel("몸박 넉백 끄기")] private bool disableContactKnockback = true;
+    [SerializeField, KoreanLabel("히트스톱 시간")] private float hitStopTime = 0.03f;
+    [SerializeField, KoreanLabel("몸박 데미지 쿨타임")] private float damageCooldown = 0.65f;
+    [SerializeField, KoreanLabel("몸박 전용 콜라이더")] private Collider2D contactArea;
 
     private float nextDamageTime;
     private readonly Collider2D[] overlapResults = new Collider2D[8];

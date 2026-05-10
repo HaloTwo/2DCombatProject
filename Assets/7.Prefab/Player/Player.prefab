@@ -244,9 +244,9 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 1
-  moveSpeed: 6.5
+  moveSpeed: 4
   jumpPower: 8.5
-  maxJumpCount: 2
+  maxJumpCount: 1
   coyoteTime: 0.1
   jumpBufferTime: 0.1
   groundCheckSize: {x: 0.58, y: 0.08}
@@ -259,6 +259,10 @@ MonoBehaviour:
   dashPower: 13
   dashDuration: 0.13
   dashCooldown: 0.3
+  platformDropDuration: 0.28
+  platformDropVelocity: -3.5
+  hitStunDuration: 0.18
+  damageInvincibleDuration: 0.65
 --- !u!114 &1013361786693013830
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -275,6 +279,7 @@ MonoBehaviour:
   rb: {fileID: 8945240710127607946}
   animator: {fileID: 2260845058193702356}
   parryEffectPrefab: {fileID: 7727036360660970297, guid: bf1e9cdabf8b59841890ef8929e9f93f, type: 3}
+  guardTriggerName: Hurt
   parryWindow: 0.16
   guardDamageRate: 0.25
   parryHitStop: 0.07
@@ -335,6 +340,7 @@ MonoBehaviour:
   rb: {fileID: 8945240710127607946}
   health: {fileID: 2655619090673079263}
   useNoBloodDeath: 0
+  damagedTriggerName: Block
   dashGhostColor: {r: 0.55, g: 0.85, b: 1, a: 0.48}
   dashGhostInterval: 0.035
   dashGhostLifeTime: 0.22
@@ -352,6 +358,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   input: {fileID: 4745650321542300253}
+  movement: {fileID: 0}
   basicAttackHitbox: {fileID: 7834423063251476601}
   basicAttack: {fileID: 11400000, guid: ebe89d8c902de524ca43ae8ff7764eae, type: 2}
   animator: {fileID: 2260845058193702356}
@@ -359,6 +366,10 @@ MonoBehaviour:
   attackMotionTime: 0.42
   attackStartupTime: 0.18
   comboInputWindow: 0.5
+  attackMoveLockTime: 0.36
+  attack1StepSpeed: 2.5
+  attack2StepSpeed: 3.3
+  attackStepDuration: 0.08
 --- !u!114 &8513724251962214074
 MonoBehaviour:
   m_ObjectHideFlags: 0

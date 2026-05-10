@@ -3,29 +3,51 @@ using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
 {
-    [SerializeField] private PlayerInputReader input;
-    [SerializeField] private Hitbox basicAttackHitbox;
-    [SerializeField] private AttackData basicAttack;
-    [SerializeField] private Animator animator;
-    [SerializeField] private bool useAnimationEventHitTiming;
-    [SerializeField] private float attackMotionTime = 0.42f;
-    [SerializeField] private float attackStartupTime = 0.18f;
-    [SerializeField] private float comboInputWindow = 0.1f;
+    [SerializeField, KoreanLabel("입력 리더")] private PlayerInputReader input;
+    [SerializeField, KoreanLabel("이동 컨트롤러")] private PlayerMovement2D movement;
+    [SerializeField, KoreanLabel("기본 공격 히트박스")] private Hitbox basicAttackHitbox;
+    [SerializeField, KoreanLabel("기본 공격 데이터")] private AttackData basicAttack;
+    [SerializeField, KoreanLabel("애니메이터")] private Animator animator;
+    [SerializeField, KoreanLabel("애니메이션 이벤트 판정 사용")] private bool useAnimationEventHitTiming;
+    [SerializeField, KoreanLabel("공격 모션 시간")] private float attackMotionTime = 0.42f;
+    [SerializeField, KoreanLabel("공격 선딜 시간")] private float attackStartupTime = 0.18f;
+    [SerializeField, KoreanLabel("콤보 입력 허용 시간")] private float comboInputWindow = 0.1f;
+
+    [Header("공격 이동")]
+    [SerializeField, KoreanLabel("공격 중 이동 잠금 시간")] private float attackMoveLockTime = 0.36f;
+    [SerializeField, KoreanLabel("1타 전진 속도")] private float attack1StepSpeed = 2.5f;
+    [SerializeField, KoreanLabel("2타 전진 속도")] private float attack2StepSpeed = 3.3f;
+    [SerializeField, KoreanLabel("전진 지속 시간")] private float attackStepDuration = 0.08f;
 
     private bool isAttacking;
     private bool isWaitingComboInput;
     private int basicAttackStep;
+    private int activeAttackStepIndex;
     private int comboVersion;
 
     private void Reset()
     {
         input = GetComponent<PlayerInputReader>();
+        movement = GetComponent<PlayerMovement2D>();
         animator = GetComponentInChildren<Animator>();
     }
 
     private void Awake()
     {
         if (input == null) input = GetComponent<PlayerInputReader>();
+        if (movement == null) movement = GetComponent<PlayerMovement2D>();
+    }
+
+    private void OnEnable()
+    {
+        if (basicAttackHitbox != null)
+            basicAttackHitbox.OnHit += HandleBasicAttackHit;
+    }
+
+    private void OnDisable()
+    {
+        if (basicAttackHitbox != null)
+            basicAttackHitbox.OnHit -= HandleBasicAttackHit;
     }
 
     private void Update()
@@ -52,8 +74,12 @@ public class PlayerCombat : MonoBehaviour
     {
         isAttacking = true;
 
-        string attackTrigger = basicAttackStep % 2 == 0 ? "Attack1" : "Attack2";
+        int stepIndex = basicAttackStep % 2;
+        activeAttackStepIndex = stepIndex;
+        string attackTrigger = stepIndex == 0 ? "Attack1" : "Attack2";
         basicAttackStep++;
+
+        movement?.LockMovementFor(attackMoveLockTime);
 
         if (animator != null)
             animator.SetTrigger(attackTrigger);
@@ -93,6 +119,7 @@ public class PlayerCombat : MonoBehaviour
         if (basicAttackHitbox == null || basicAttack == null)
             return;
 
+        movement?.ApplyAttackStep(activeAttackStepIndex == 0 ? attack1StepSpeed : attack2StepSpeed, attackStepDuration);
         basicAttackHitbox.Open(Team.Player, basicAttack);
     }
 
@@ -100,6 +127,12 @@ public class PlayerCombat : MonoBehaviour
     public void CloseBasicAttackHitbox()
     {
         basicAttackHitbox?.Close();
+        movement?.StopAttackStep();
+    }
+
+    private void HandleBasicAttackHit(Health target)
+    {
+        movement?.StopAttackStep();
     }
 
     public void OpenAttackHitbox()

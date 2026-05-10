@@ -4,6 +4,7 @@ public class EnemyAnimationEventRelay : MonoBehaviour
 {
     [SerializeField] private MeleeChargerEnemy meleeEnemy;
     [SerializeField] private FlyingMeleeEnemy flyingEnemy;
+    [SerializeField] private RangedShooterEnemy rangedEnemy;
 
     private void Reset()
     {
@@ -27,6 +28,9 @@ public class EnemyAnimationEventRelay : MonoBehaviour
 
         if (flyingEnemy == null)
             flyingEnemy = GetComponentInParent<FlyingMeleeEnemy>();
+
+        if (rangedEnemy == null)
+            rangedEnemy = GetComponentInParent<RangedShooterEnemy>();
     }
 
     public void OpenEnemyAttackHitbox()
@@ -39,6 +43,21 @@ public class EnemyAnimationEventRelay : MonoBehaviour
     {
         meleeEnemy?.CloseAttackHitbox();
         flyingEnemy?.CloseAttackHitbox();
+    }
+
+    public void FireEnemyProjectile()
+    {
+        rangedEnemy?.FireProjectileByAnimationEvent();
+    }
+
+    public void ShootEnemyProjectile()
+    {
+        FireEnemyProjectile();
+    }
+
+    public void FireProjectile()
+    {
+        FireEnemyProjectile();
     }
 
 }

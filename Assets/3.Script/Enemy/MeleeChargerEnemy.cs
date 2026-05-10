@@ -55,9 +55,9 @@ public class MeleeChargerEnemy : EnemyBrainBase
         if (Time.time < nextAttackTime || attackData == null || attackHitbox == null)
             return;
 
-        nextAttackTime = Time.time + attackCooldown;
+        nextAttackTime = Time.time + ScaleEnemyDuration(attackCooldown);
         state = EnemyState.Attack;
-        attackEndTime = Time.time + attackStateDuration;
+        attackEndTime = Time.time + ScaleEnemyDuration(attackStateDuration);
 
         if (animator != null)
             animator.SetTrigger("Attack");

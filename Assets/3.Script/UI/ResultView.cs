@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ResultView : MonoBehaviour
 {
@@ -36,5 +37,11 @@ public class ResultView : MonoBehaviour
     {
         if (clearPanel != null) clearPanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
+    }
+
+    public void Retry()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }
