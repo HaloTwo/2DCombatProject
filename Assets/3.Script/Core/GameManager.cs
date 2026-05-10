@@ -38,6 +38,7 @@ public class GameManager : MonoBehaviour
     {
         if (state == GameState.Clear) return;
         state = GameState.Clear;
+        WaveAnnounceUI.ShowGameClearGlobal();
         Debug.Log("[GameManager] Game Clear");
     }
 

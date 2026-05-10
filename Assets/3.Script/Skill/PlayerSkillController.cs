@@ -17,6 +17,16 @@ public class PlayerSkillController : MonoBehaviour
     [SerializeField] private GameObject slashEffectPrefab;
     [SerializeField] private GameObject risingEffectPrefab;
     [SerializeField] private GameObject slamEffectPrefab;
+    [SerializeField] private GameObject slamDustPrefab;
+
+    [Header("Ground Slam")]
+    [SerializeField, KoreanLabel("슬램 충격파 반경")] private float groundSlamRadius = 2.3f;
+    [SerializeField, KoreanLabel("슬램 넉백 힘")] private float groundSlamKnockbackForce = 8.5f;
+    [SerializeField, KoreanLabel("슬램 넉백 상승 힘")] private float groundSlamKnockbackUpForce = 2.2f;
+    [SerializeField, KoreanLabel("슬램 카메라 흔들림 시간")] private float groundSlamShakeDuration = 0.12f;
+    [SerializeField, KoreanLabel("슬램 카메라 흔들림 힘")] private float groundSlamShakePower = 0.13f;
+    [SerializeField, KoreanLabel("슬램 히트스톱")] private float groundSlamHitStop = 0.06f;
+    [SerializeField, KoreanLabel("슬램 착지 대기 최대 시간")] private float groundSlamMaxFallWait = 0.65f;
 
     private float nextSkillOneTime;
     private float nextSkillTwoTime;
@@ -24,7 +34,7 @@ public class PlayerSkillController : MonoBehaviour
 
     public SkillData SkillOne => skillOne;
     public SkillData SkillTwo => skillTwo;
-    public SkillData[] AvailableSkills => availableSkills;
+    public SkillData[] AvailableSkills => availableSkills != null && availableSkills.Length > 0 ? availableSkills : new[] { skillOne, skillTwo };
 
     private void Reset()
     {
@@ -122,6 +132,24 @@ public class PlayerSkillController : MonoBehaviour
         (nextSkillOneTime, nextSkillTwoTime) = (nextSkillTwoTime, nextSkillOneTime);
     }
 
+    // 스킬 선택 UI에서 특정 슬롯에 새 스킬을 장착할 때 호출한다. 교체된 슬롯의 쿨다운은 즉시 사용할 수 있게 초기화한다.
+    public void SetSkillSlot(int slotIndex, SkillData skill)
+    {
+        if (skill == null)
+            return;
+
+        if (slotIndex == 0)
+        {
+            skillOne = skill;
+            nextSkillOneTime = 0f;
+        }
+        else
+        {
+            skillTwo = skill;
+            nextSkillTwoTime = 0f;
+        }
+    }
+
     public float GetCooldownRemaining(int slotIndex)
     {
         SkillData skill = slotIndex == 0 ? skillOne : skillTwo;
@@ -196,12 +224,23 @@ public class PlayerSkillController : MonoBehaviour
     private IEnumerator CoGroundSlam(SkillData skill)
     {
         isUsingSkill = true;
+        movement?.LockMovementFor(Mathf.Max(skill.duration, 0.35f));
 
         if (rb != null)
             rb.linearVelocity = new Vector2(0f, -Mathf.Abs(skill.force));
 
-        yield return new WaitForSeconds(skill.duration * 0.45f);
-        SpawnEffect(slamEffectPrefab, transform.position + new Vector3(0f, -0.65f, 0f), Vector3.one);
+        float waitEndTime = Time.time + Mathf.Max(0.05f, groundSlamMaxFallWait);
+        yield return new WaitUntil(() => Time.time >= waitEndTime || movement == null || movement.IsGrounded);
+
+        Vector3 slamCenter = transform.position + new Vector3(0f, -0.45f, 0f);
+        SpawnEffect(slamEffectPrefab, slamCenter, Vector3.one);
+        SpawnEffect(slamDustPrefab, slamCenter, Vector3.one);
+        ApplyGroundSlamArea(skill, slamCenter);
+
+        if (CameraShake.Instance != null)
+            CameraShake.Instance.Shake(groundSlamShakeDuration, groundSlamShakePower);
+
+        GlobalHitStop.Play(groundSlamHitStop);
 
         if (skillHitbox != null && skill.attackData != null)
             skillHitbox.Open(Team.Player, skill.attackData);
@@ -210,6 +249,32 @@ public class PlayerSkillController : MonoBehaviour
 
         skillHitbox?.Close();
         isUsingSkill = false;
+    }
+
+    // 슬램 착지 타이밍에 원형 범위 피해와 바깥쪽 넉백을 같이 적용해 광역기 느낌을 만든다.
+    private void ApplyGroundSlamArea(SkillData skill, Vector2 center)
+    {
+        if (skill == null || skill.attackData == null || groundSlamRadius <= 0f)
+            return;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(center, groundSlamRadius);
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null || !hit.TryGetComponent(out Hurtbox hurtbox) || hurtbox.Health == null || hurtbox.Health.Team == Team.Player)
+                continue;
+
+            Vector2 direction = ((Vector2)hurtbox.Health.transform.position - center).normalized;
+            if (direction.sqrMagnitude < 0.01f)
+                direction = movement != null && movement.Facing < 0f ? Vector2.left : Vector2.right;
+
+            Vector2 knockback = new Vector2(direction.x * groundSlamKnockbackForce, groundSlamKnockbackUpForce);
+            float damage = PlayerDamageBuff.ModifyPlayerDamage(skill.attackData.damage);
+            DamageInfo info = new DamageInfo(Team.Player, damage, hit.ClosestPoint(center), knockback, skill.attackData.hitStopTime);
+
+            if (hurtbox.ApplyDamage(info, this) && hurtbox.Health.TryGetComponent(out EnemyBrainBase enemyBrain))
+                enemyBrain.ApplyFocusBurstKnockback(direction, groundSlamKnockbackForce, groundSlamKnockbackUpForce, 0.18f);
+        }
     }
 
     // 뒤로 빠지면서 투사체를 발사해 근접/원거리 리듬을 섞는다.

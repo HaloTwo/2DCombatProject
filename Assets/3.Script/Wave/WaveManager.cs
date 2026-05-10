@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public class WaveManager : MonoBehaviour
@@ -10,6 +11,9 @@ public class WaveManager : MonoBehaviour
     private readonly List<Health> aliveEnemies = new();
     private int currentWaveIndex = -1;
     private bool isRunning;
+
+    public static event Action<int> OnWaveCleared;
+    public static event Action OnAllWavesCleared;
 
     private void Start()
     {
@@ -34,10 +38,14 @@ public class WaveManager : MonoBehaviour
 
             yield return StartCoroutine(CoSpawnWave(wave));
             yield return new WaitUntil(() => aliveEnemies.Count == 0);
-            yield return new WaitForSeconds(wave.nextWaveDelay);
+            OnWaveCleared?.Invoke(currentWaveIndex);
+            WaveAnnounceUI.ShowWaveClearGlobal(currentWaveIndex);
+            yield return new WaitForSeconds(Mathf.Max(1f, wave.nextWaveDelay));
         }
 
         isRunning = false;
+        OnAllWavesCleared?.Invoke();
+        WaveAnnounceUI.ShowGameClearGlobal();
         GameManager.Instance?.ClearGame();
     }
 
@@ -77,7 +85,7 @@ public class WaveManager : MonoBehaviour
         if (spawnPoints.Count == 0)
             return transform.position;
 
-        int index = Random.Range(0, spawnPoints.Count);
+        int index = UnityEngine.Random.Range(0, spawnPoints.Count);
         return spawnPoints[index] != null ? spawnPoints[index].Position : transform.position;
     }
 

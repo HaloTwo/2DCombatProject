@@ -13,15 +13,10 @@ public class CombatFeedback : MonoBehaviour
     [SerializeField] private float maxKnockbackX = 1.2f;
     [SerializeField] private float maxKnockbackY = 0.7f;
 
-    [Header("Flash")]
-    [SerializeField] private float flashTime = 0.08f;
-
     [Header("Damage Text")]
     [SerializeField] private bool spawnDamageText;
     [SerializeField] private Color damageTextColor = Color.white;
     [SerializeField] private Vector3 damageTextOffset = new Vector3(0f, 0.45f, 0f);
-
-    private Coroutine flashRoutine;
 
     private void Reset()
     {
@@ -58,14 +53,6 @@ public class CombatFeedback : MonoBehaviour
 
         CameraShake.ShakeDefault();
         SpawnDamageText(info);
-
-        if (rendererCache != null)
-        {
-            if (flashRoutine != null)
-                StopCoroutine(flashRoutine);
-
-            flashRoutine = StartCoroutine(CoFlash());
-        }
     }
 
     private void ApplyKnockback(DamageInfo info)
@@ -102,16 +89,6 @@ public class CombatFeedback : MonoBehaviour
         renderer.sortingOrder = 80;
 
         go.AddComponent<WorldDamageText>();
-        ComboCounterUI.Instance?.RegisterHit(info);
-    }
-
-    private IEnumerator CoFlash()
-    {
-        rendererCache.SetColor(Color.white);
-
-        yield return new WaitForSecondsRealtime(flashTime);
-
-        rendererCache.Restore();
     }
 }
 

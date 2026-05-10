@@ -11,6 +11,7 @@ public class Hitbox : MonoBehaviour
     private readonly HashSet<Health> hitTargets = new();
 
     public event Action<Health> OnHit;
+    public static event Action<Health, DamageInfo> OnAnyHit;
 
     private void Reset()
     {
@@ -67,11 +68,13 @@ public class Hitbox : MonoBehaviour
         Vector2 knockback = new Vector2(attackData.knockback.x * Mathf.Sign(direction.x == 0f ? transform.right.x : direction.x), attackData.knockback.y);
 
         // 데미지, 넉백, 히트스톱을 하나로 묶어 피격 대상에게 전달한다.
-        DamageInfo info = new DamageInfo(ownerTeam, attackData.damage, hitPoint, knockback, attackData.hitStopTime);
+        float damage = ownerTeam == Team.Player ? PlayerDamageBuff.ModifyPlayerDamage(attackData.damage) : attackData.damage;
+        DamageInfo info = new DamageInfo(ownerTeam, damage, hitPoint, knockback, attackData.hitStopTime);
         if (hurtbox.ApplyDamage(info, this))
         {
             hitTargets.Add(hurtbox.Health);
             OnHit?.Invoke(hurtbox.Health);
+            OnAnyHit?.Invoke(hurtbox.Health, info);
         }
     }
 

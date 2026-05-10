@@ -71,7 +71,8 @@ public class Projectile : MonoBehaviour, IPoolable, IParryReactable
             return;
         }
 
-        DamageInfo info = new DamageInfo(ownerTeam, attackData.damage, other.ClosestPoint(transform.position), attackData.knockback, attackData.hitStopTime);
+        float damage = ownerTeam == Team.Player ? PlayerDamageBuff.ModifyPlayerDamage(attackData.damage) : attackData.damage;
+        DamageInfo info = new DamageInfo(ownerTeam, damage, other.ClosestPoint(transform.position), attackData.knockback, attackData.hitStopTime);
         if (hurtbox.ApplyDamage(info, this))
             Release();
     }
