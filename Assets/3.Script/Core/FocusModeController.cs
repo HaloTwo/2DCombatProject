@@ -14,6 +14,24 @@ public sealed class FocusModeController : MonoBehaviour
     public static event Action<bool> OnFocusChanged;
     public static event Action<float> OnFocusProgressChanged;
 
+    public static void BeginPreviewSlow(float enemySpeedMultiplier, float projectileSpeedMultiplier)
+    {
+        if (IsActive)
+            return;
+
+        EnemySpeedMultiplier = Mathf.Clamp(enemySpeedMultiplier, 0.05f, 1f);
+        ProjectileSpeedMultiplier = Mathf.Clamp(projectileSpeedMultiplier, 0.05f, 1f);
+    }
+
+    public static void EndPreviewSlow()
+    {
+        if (IsActive)
+            return;
+
+        EnemySpeedMultiplier = 1f;
+        ProjectileSpeedMultiplier = 1f;
+    }
+
     public static void Activate(float duration, float enemySpeedMultiplier, float projectileSpeedMultiplier)
     {
         if (duration <= 0f)

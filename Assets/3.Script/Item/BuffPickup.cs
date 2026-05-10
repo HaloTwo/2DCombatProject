@@ -5,7 +5,8 @@ public enum BuffPickupType
 {
     Heal,
     FocusCharge,
-    SpeedBoost
+    SpeedBoost,
+    Invincible
 }
 
 public class BuffPickup : MonoBehaviour
@@ -14,6 +15,7 @@ public class BuffPickup : MonoBehaviour
     [SerializeField, KoreanLabel("회복량")] private float healAmount = 18f;
     [SerializeField, KoreanLabel("포커스 충전량")] private float focusChargeAmount = 25f;
     [SerializeField, KoreanLabel("이동 속도 배율")] private float speedMultiplier = 1.2f;
+    [SerializeField, KoreanLabel("무적 시간")] private float invincibleDuration = 2f;
     [SerializeField, KoreanLabel("버프 지속 시간")] private float buffDuration = 5f;
     [SerializeField, KoreanLabel("획득 시 비활성화")] private bool deactivateOnPickup = true;
 
@@ -46,11 +48,15 @@ public class BuffPickup : MonoBehaviour
                 break;
 
             case BuffPickupType.FocusCharge:
-                FindFirstObjectByType<HUDView>()?.AddFocusGauge(focusChargeAmount);
+                HUDView.Instance?.AddFocusGauge(focusChargeAmount);
                 break;
 
             case BuffPickupType.SpeedBoost:
                 movement.SetTemporaryMoveSpeedMultiplier(speedMultiplier, buffDuration);
+                break;
+
+            case BuffPickupType.Invincible:
+                player.GetComponent<Health>()?.SetInvincibleFor(invincibleDuration);
                 break;
         }
     }

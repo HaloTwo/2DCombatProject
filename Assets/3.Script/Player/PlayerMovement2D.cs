@@ -55,9 +55,14 @@ public class PlayerMovement2D : MonoBehaviour
     private PhysicsMaterial2D noFrictionMaterial;
     private readonly List<ColliderPair> ignoredDashCollisions = new();
 
+    public static PlayerMovement2D Instance { get; private set; }
     public float Facing => facing;
     public bool IsDashing => isDashing;
     public bool IsGrounded { get; private set; }
+    public bool IsInputLocked => IsControlLocked();
+    public Health Health => health;
+    public Collider2D[] Colliders => ownColliders;
+    public SpriteRenderer VisualRenderer { get; private set; }
 
     private void Reset()
     {
@@ -67,11 +72,14 @@ public class PlayerMovement2D : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
+
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (input == null) input = GetComponent<PlayerInputReader>();
         if (health == null) health = GetComponent<Health>();
 
         ownColliders = GetComponentsInChildren<Collider2D>();
+        VisualRenderer = GetComponentInChildren<SpriteRenderer>();
         ApplyNoFrictionMaterial();
     }
 
@@ -85,10 +93,16 @@ public class PlayerMovement2D : MonoBehaviour
     {
         if (health != null)
             health.OnDamaged -= HandleDamaged;
+
+        if (Instance == this)
+            Instance = null;
     }
 
     private void Update()
     {
+        if (health != null && health.IsDead)
+            return;
+
         UpdateGrounded();
         CacheInputTime();
 
@@ -107,6 +121,14 @@ public class PlayerMovement2D : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (health != null && health.IsDead)
+        {
+            if (rb != null)
+                rb.linearVelocity = Vector2.zero;
+
+            return;
+        }
+
         if (isDashing || input == null) return;
 
         if (isAttackStepping)
@@ -134,6 +156,11 @@ public class PlayerMovement2D : MonoBehaviour
         controlLockedUntilTime = Mathf.Max(controlLockedUntilTime, Time.time + duration);
         if (!isDashing && !isAttackStepping && rb != null)
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+    }
+
+    public void LockMovementForRealtime(float duration)
+    {
+        LockMovementFor(duration);
     }
 
     // 평타 1타/2타에서 짧게 앞으로 밀어주는 연출용 이동이다. 일반 이동 잠금과 별도로 FixedUpdate 덮어쓰기를 피한다.

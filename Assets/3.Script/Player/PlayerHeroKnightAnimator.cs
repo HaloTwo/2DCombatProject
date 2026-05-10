@@ -22,6 +22,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
 
     private readonly Dictionary<string, AnimatorControllerParameterType> parameterTypes = new();
     private bool wasDashing;
+    private bool isDead;
     private float nextDashGhostTime;
     private Color originColor = Color.white;
 
@@ -57,6 +58,9 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
         if (animator == null)
             return;
 
+        if (isDead)
+            return;
+
         UpdateMovementParameters();
         UpdateActionTriggers();
         UpdateDashEffect();
@@ -67,20 +71,21 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
     private void UpdateMovementParameters()
     {
         bool grounded = movement != null && movement.IsGrounded;
-        float horizontal = input != null ? input.Move.x : 0f;
+        bool inputLocked = movement != null && movement.IsInputLocked;
+        float horizontal = !inputLocked && input != null ? input.Move.x : 0f;
         float verticalSpeed = rb != null ? rb.linearVelocity.y : 0f;
 
         SetBool("Grounded", grounded);
         SetBool("IsMoving", grounded && Mathf.Abs(horizontal) > 0.01f);
         SetFloat("AirSpeedY", verticalSpeed);
         SetInteger("AnimState", grounded && Mathf.Abs(horizontal) > 0.01f ? 1 : 0);
-        SetBool("IdleBlock", input != null && input.BlockHeld);
+        SetBool("IdleBlock", !inputLocked && input != null && input.BlockHeld);
     }
 
     // 실제 전투 판정은 PlayerCombat/PlayerSkillController가 담당하고, 여기서는 애니메이션 트리거만 맞춘다.
     private void UpdateActionTriggers()
     {
-        if (input == null)
+        if (input == null || (movement != null && movement.IsInputLocked))
             return;
 
         if (input.JumpPressed)
@@ -102,11 +107,15 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
 
     private void HandleDamaged(Health target, DamageInfo info)
     {
+        if (isDead)
+            return;
+
         SetTrigger(damagedTriggerName);
     }
 
     private void HandleDead(Health target)
     {
+        isDead = true;
         SetBool("noBlood", useNoBloodDeath);
         SetTrigger("Death");
     }

@@ -4,6 +4,7 @@ using UnityEngine;
 public class PlayerGuard : MonoBehaviour
 {
     [SerializeField] private PlayerInputReader input;
+    [SerializeField] private PlayerMovement2D movement;
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Animator animator;
     [SerializeField] private GameObject parryEffectPrefab;
@@ -18,12 +19,13 @@ public class PlayerGuard : MonoBehaviour
     private float parryEndTime;
     private Coroutine hitStopRoutine;
 
-    public bool IsGuarding => input != null && input.BlockHeld;
+    public bool IsGuarding => input != null && !IsInputLocked() && input.BlockHeld;
     public bool IsParryWindow => IsGuarding && Time.time <= parryEndTime;
 
     private void Reset()
     {
         input = GetComponent<PlayerInputReader>();
+        movement = GetComponent<PlayerMovement2D>();
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponentInChildren<Animator>();
     }
@@ -31,13 +33,14 @@ public class PlayerGuard : MonoBehaviour
     private void Awake()
     {
         if (input == null) input = GetComponent<PlayerInputReader>();
+        if (movement == null) movement = GetComponent<PlayerMovement2D>();
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (animator == null) animator = GetComponentInChildren<Animator>();
     }
 
     private void Update()
     {
-        if (input != null && input.BlockPressed)
+        if (input != null && !IsInputLocked() && input.BlockPressed)
             OpenParryWindow();
     }
 
@@ -111,4 +114,9 @@ public class PlayerGuard : MonoBehaviour
     }
 
     public float ParryKnockback => parryKnockback;
+
+    private bool IsInputLocked()
+    {
+        return movement != null && movement.IsInputLocked;
+    }
 }

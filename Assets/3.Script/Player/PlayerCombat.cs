@@ -52,6 +52,9 @@ public class PlayerCombat : MonoBehaviour
 
     private void Update()
     {
+        if (movement != null && movement.IsInputLocked)
+            return;
+
         if (input != null && input.AttackPressed)
             TryBasicAttack();
     }
@@ -60,6 +63,9 @@ public class PlayerCombat : MonoBehaviour
     public void TryBasicAttack()
     {
         if (isAttacking || basicAttack == null || basicAttackHitbox == null)
+            return;
+
+        if (movement != null && movement.IsInputLocked)
             return;
 
         if (!isWaitingComboInput)

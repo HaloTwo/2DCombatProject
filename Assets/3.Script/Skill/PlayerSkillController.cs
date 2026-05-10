@@ -45,6 +45,7 @@ public class PlayerSkillController : MonoBehaviour
     private void Update()
     {
         if (input == null) return;
+        if (movement != null && movement.IsInputLocked) return;
 
         if (input.SkillOnePressed)
             TryUseSkill(skillOne, ref nextSkillOneTime);
@@ -88,6 +89,9 @@ public class PlayerSkillController : MonoBehaviour
     private bool CanUseSkill(SkillData skill, float nextUseTime)
     {
         if (skill == null || isUsingSkill)
+            return false;
+
+        if (movement != null && movement.IsInputLocked)
             return false;
 
         return Time.time >= nextUseTime;

@@ -42,7 +42,6 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     private float nextJumpTime;
     private float blockedUntilTime;
     private float nextPatrolTurnTime;
-    private float nextPlayerCollisionRefreshTime;
     private Collider2D[] bodyColliders;
     private Collider2D[] playerColliders;
     private static readonly System.Collections.Generic.List<EnemyBrainBase> activeEnemies = new();
@@ -106,28 +105,12 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
 
     protected abstract void TickState();
 
-    // 플레이어를 찾고 감지 범위에 따라 Idle/Chase 상태를 전환한다.
+    // 플레이어 캐시를 사용해 씬 전체 탐색 없이 타겟을 잡고 감지 범위에 따라 상태를 전환한다.
     protected void ResolveTarget()
     {
         if (target == null)
         {
-            GameObject player = GameObject.FindGameObjectWithTag(playerTag);
-            if (player != null)
-            {
-                target = player.transform;
-                playerColliders = player.GetComponentsInChildren<Collider2D>();
-                IgnorePlayerCollision(true);
-            }
-            else
-            {
-                PlayerMovement2D playerMovement = FindFirstObjectByType<PlayerMovement2D>();
-                if (playerMovement != null)
-                {
-                    target = playerMovement.transform;
-                    playerColliders = playerMovement.GetComponentsInChildren<Collider2D>();
-                    IgnorePlayerCollision(true);
-                }
-            }
+            AssignPlayerTarget(PlayerMovement2D.Instance);
         }
 
         if (target == null)
@@ -159,7 +142,10 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
             return IsTargetInAttackRange();
 
         Bounds attackBounds = GetColliderWorldBounds(attackCollider);
-        Collider2D[] targetColliders = target.GetComponentsInChildren<Collider2D>();
+        Collider2D[] targetColliders = playerColliders;
+        if (targetColliders == null || targetColliders.Length == 0)
+            return IsTargetInAttackRange();
+
         for (int i = 0; i < targetColliders.Length; i++)
         {
             Collider2D targetCollider = targetColliders[i];
@@ -369,6 +355,22 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
             animator.SetTrigger("Hurt");
     }
 
+    public void ApplyFocusBurstKnockback(Vector2 direction, float force, float upForce, float stunDuration)
+    {
+        if (state == EnemyState.Dead || rb == null)
+            return;
+
+        if (direction.sqrMagnitude < 0.01f)
+            direction = facing >= 0f ? Vector2.right : Vector2.left;
+
+        state = EnemyState.Hit;
+        stunEndTime = Mathf.Max(stunEndTime, Time.time + Mathf.Max(0.05f, stunDuration));
+        rb.linearVelocity = new Vector2(direction.normalized.x * force, upForce);
+
+        if (animator != null)
+            animator.SetTrigger("Hurt");
+    }
+
     private void UpdateAnimator()
     {
         if (animator == null) return;
@@ -428,8 +430,8 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
         if (bodyColliders == null || bodyColliders.Length == 0)
             bodyColliders = GetComponentsInChildren<Collider2D>();
 
-        if ((playerColliders == null || playerColliders.Length == 0) && target != null)
-            playerColliders = target.GetComponentsInChildren<Collider2D>();
+        if ((playerColliders == null || playerColliders.Length == 0) && PlayerMovement2D.Instance != null)
+            playerColliders = PlayerMovement2D.Instance.Colliders;
 
         if (playerColliders == null)
             return;
@@ -451,23 +453,37 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
         }
     }
 
-    // 플레이어 프리팹/리스폰 타이밍에 콜라이더 목록이 바뀌어도 적과 플레이어가 서로 밀어내지 않게 재적용한다.
-    // 플레이어 프리팹/리스폰 타이밍에 콜라이더 목록이 바뀌어도 충돌 무시를 다시 적용한다.
+    // 플레이어 캐시가 준비되거나 리스폰으로 바뀐 경우에만 충돌 무시를 다시 적용한다.
     private void RefreshPlayerCollisionIgnore()
     {
-        if (Time.time < nextPlayerCollisionRefreshTime)
+        PlayerMovement2D player = PlayerMovement2D.Instance;
+        if (player == null)
             return;
 
-        nextPlayerCollisionRefreshTime = Time.time + 0.2f;
-
-        if (target == null)
+        if (target != player.transform)
+        {
+            AssignPlayerTarget(player);
             return;
+        }
 
-        Collider2D[] latestPlayerColliders = target.GetComponentsInChildren<Collider2D>();
+        Collider2D[] latestPlayerColliders = player.Colliders;
         if (latestPlayerColliders == null || latestPlayerColliders.Length == 0)
             return;
 
+        if (ReferenceEquals(playerColliders, latestPlayerColliders))
+            return;
+
         playerColliders = latestPlayerColliders;
+        IgnorePlayerCollision(true);
+    }
+
+    private void AssignPlayerTarget(PlayerMovement2D player)
+    {
+        if (player == null)
+            return;
+
+        target = player.transform;
+        playerColliders = player.Colliders;
         IgnorePlayerCollision(true);
     }
 }

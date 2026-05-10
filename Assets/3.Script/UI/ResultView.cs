@@ -17,7 +17,7 @@ public class ResultView : MonoBehaviour
 
         if (GameManager.Instance.State == GameState.Clear)
             ShowClear();
-        else if (GameManager.Instance.State == GameState.GameOver)
+        else if (GameManager.Instance.State == GameState.GameOver && GameManager.Instance.CanShowGameOverMenu)
             ShowGameOver();
     }
 

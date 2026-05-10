@@ -8,11 +8,15 @@ public class BuffPickupSpawner : MonoBehaviour
     [SerializeField, KoreanLabel("최소 스폰 간격")] private float minSpawnInterval = 7f;
     [SerializeField, KoreanLabel("최대 스폰 간격")] private float maxSpawnInterval = 13f;
     [SerializeField, KoreanLabel("동시에 유지할 최대 개수")] private int maxAliveCount = 2;
+    [SerializeField, KoreanLabel("시작 시 즉시 생성")] private bool spawnOnStart = true;
 
     private int aliveCount;
 
     private void OnEnable()
     {
+        if (spawnOnStart)
+            TrySpawn();
+
         StartCoroutine(CoSpawnLoop());
     }
 

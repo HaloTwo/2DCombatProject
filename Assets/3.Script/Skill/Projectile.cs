@@ -88,6 +88,11 @@ public class Projectile : MonoBehaviour, IPoolable, IParryReactable
         transform.localScale = scale;
     }
 
+    public void ForceRelease()
+    {
+        Release();
+    }
+
     public void OnSpawned()
     {
         if (ownColliders == null || ownColliders.Length == 0)
