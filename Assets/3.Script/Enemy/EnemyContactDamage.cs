@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class EnemyContactDamage : MonoBehaviour
 {
     [Header("몸박 데미지")]
+    [SerializeField, KoreanLabel("몸박 데미지 사용")] private bool enableContactDamage;
     [SerializeField, KoreanLabel("몸박 데미지")] private float damage = 5f;
     [SerializeField, KoreanLabel("몸박 넉백")] private Vector2 knockback = new Vector2(0.4f, 0.2f);
     [SerializeField, KoreanLabel("몸박 넉백 끄기")] private bool disableContactKnockback = true;
@@ -24,27 +25,34 @@ public class EnemyContactDamage : MonoBehaviour
 
     private void Update()
     {
+        if (!enableContactDamage)
+            return;
+
         TryApplyOverlapDamage();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        TryApplyContactDamage(collision.collider);
+        if (enableContactDamage)
+            TryApplyContactDamage(collision.collider);
     }
 
     private void OnCollisionStay2D(Collision2D collision)
     {
-        TryApplyContactDamage(collision.collider);
+        if (enableContactDamage)
+            TryApplyContactDamage(collision.collider);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        TryApplyContactDamage(other);
+        if (enableContactDamage)
+            TryApplyContactDamage(other);
     }
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        TryApplyContactDamage(other);
+        if (enableContactDamage)
+            TryApplyContactDamage(other);
     }
 
     private void TryApplyContactDamage(Collider2D target)
@@ -63,7 +71,7 @@ public class EnemyContactDamage : MonoBehaviour
             nextDamageTime = Time.time + damageCooldown;
     }
 
-    // 플레이어-적 물리 충돌을 무시해도 몸이 겹치면 접촉 데미지는 들어가게 처리한다.
+    // 몸박 데미지를 켰을 때만 플레이어와 겹친 상태를 검사한다. 기본 전투는 적 공격 히트박스만 데미지를 준다.
     private void TryApplyOverlapDamage()
     {
         if (Time.time < nextDamageTime || contactArea == null)

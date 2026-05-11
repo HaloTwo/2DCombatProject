@@ -37,6 +37,7 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     protected float facing = 1f;
     protected float patrolDirection = 1f;
     protected float stunEndTime;
+    protected float knockbackMoveEndTime;
     protected float EffectiveMoveSpeed => moveSpeed * FocusModeController.EnemySpeedMultiplier;
     protected float EnemyTimeScale => Mathf.Clamp(FocusModeController.EnemySpeedMultiplier, 0.05f, 1f);
     private float nextJumpTime;
@@ -65,6 +66,12 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
 
     protected virtual void OnEnable()
     {
+        state = EnemyState.Idle;
+        stunEndTime = 0f;
+        knockbackMoveEndTime = 0f;
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+
         RegisterEnemyCollision();
 
         if (health != null)
@@ -92,7 +99,9 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
 
         if (Time.time < stunEndTime)
         {
-            StopMove();
+            if (Time.time >= knockbackMoveEndTime)
+                StopMove();
+
             UpdateAnimator();
             return;
         }
@@ -332,7 +341,11 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     {
         state = EnemyState.Dead;
         StopMove();
-        gameObject.SetActive(false);
+
+        if (ObjectPool.Instance != null && GetComponent<PooledObjectTag>() != null)
+            ObjectPool.Instance.Release(gameObject);
+        else
+            gameObject.SetActive(false);
     }
 
     // 피격 직후에는 짧게 경직시키고 공통 피격 애니메이션을 재생한다.
@@ -365,6 +378,7 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
 
         state = EnemyState.Hit;
         stunEndTime = Mathf.Max(stunEndTime, Time.time + Mathf.Max(0.05f, stunDuration));
+        knockbackMoveEndTime = Mathf.Max(knockbackMoveEndTime, Time.time + Mathf.Min(Mathf.Max(0.08f, stunDuration * 0.45f), stunDuration));
         rb.linearVelocity = new Vector2(direction.normalized.x * force, upForce);
 
         if (animator != null)
@@ -397,7 +411,6 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     private void UnregisterEnemyCollision()
     {
         activeEnemies.Remove(this);
-        IgnorePlayerCollision(false);
 
         for (int i = 0; i < activeEnemies.Count; i++)
             IgnoreCollisionWith(activeEnemies[i], false);
@@ -468,9 +481,6 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
 
         Collider2D[] latestPlayerColliders = player.Colliders;
         if (latestPlayerColliders == null || latestPlayerColliders.Length == 0)
-            return;
-
-        if (ReferenceEquals(playerColliders, latestPlayerColliders))
             return;
 
         playerColliders = latestPlayerColliders;

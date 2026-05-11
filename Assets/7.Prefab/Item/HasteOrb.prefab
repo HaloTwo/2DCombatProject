@@ -142,9 +142,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BuffItem
   buffType: 0
-  duration: 5
+  duration: 10
   moveSpeedMultiplier: 1.35
-  attackPowerMultiplier: 1.4
-  focusGaugeAmount: 25
+  attackPowerMultiplier: 1
+  focusGaugeAmount: 0
   pickupEffectPrefab: {fileID: 7700100000000000000, guid: 07f3ad08cffb4f04a883f0b669f78117, type: 3}
   deactivateOnPickup: 1

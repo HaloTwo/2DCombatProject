@@ -12,10 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3520d42df665a5443967a3d35486f533, type: 3}
   m_Name: Skill_GroundSlam
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  skillType: 4
+  displayName: "\uCDA9\uACA9\uD30C"
+  icon: {fileID: 0}
+  skillType: 3
   attackData: {fileID: 11400000, guid: 91ffeac179833114d9e6e971124c6ac3, type: 2}
-  cooldown: 2.4
-  duration: 0.34
+  cooldown: 3.8
+  duration: 0.38
   range: 2.6
-  force: 22
+  force: 24
   projectilePrefab: {fileID: 0}

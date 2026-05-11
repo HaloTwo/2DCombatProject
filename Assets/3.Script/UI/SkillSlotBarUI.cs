@@ -15,6 +15,7 @@ public class SkillSlotBarUI : MonoBehaviour
     [SerializeField] private Text selectionTitleText;
 
     private readonly List<Button> createdButtons = new();
+    private Canvas selectionCanvas;
     private int selectedSlotIndex;
 
     private void Start()
@@ -44,7 +45,7 @@ public class SkillSlotBarUI : MonoBehaviour
         if (skillController == null || from == null || to == null || from == to)
             return;
 
-        // 드래그 교체는 실제 스킬 데이터와 쿨다운 상태를 같이 바꾼다.
+        // 드래그 교체는 스킬 데이터와 쿨다운 상태를 같이 교환한다.
         skillController.SwapSkillSlots();
         Refresh();
         slotOne?.PlaySwapFeedback();
@@ -65,9 +66,10 @@ public class SkillSlotBarUI : MonoBehaviour
 
         selectedSlotIndex = Mathf.Clamp(slotIndex, 0, 1);
         if (selectionTitleText != null)
-            selectionTitleText.text = selectedSlotIndex == 0 ? "Skill A" : "Skill S";
+            selectionTitleText.text = selectedSlotIndex == 0 ? "A 슬롯 스킬 선택" : "S 슬롯 스킬 선택";
 
         RebuildSkillButtons();
+        selectionPanel.transform.SetAsLastSibling();
         selectionPanel.SetActive(true);
     }
 
@@ -105,6 +107,7 @@ public class SkillSlotBarUI : MonoBehaviour
         if (skills == null || selectionContent == null)
             return;
 
+        int createdCount = 0;
         for (int i = 0; i < skills.Length; i++)
         {
             SkillData skill = skills[i];
@@ -113,6 +116,17 @@ public class SkillSlotBarUI : MonoBehaviour
 
             Button button = CreateSkillButton(skill);
             createdButtons.Add(button);
+            createdCount++;
+        }
+
+        if (createdCount == 0)
+        {
+            Button emptyButton = CreateDefaultButton(selectionContent);
+            emptyButton.interactable = false;
+            Text label = emptyButton.GetComponentInChildren<Text>();
+            if (label != null)
+                label.text = "장착 가능한 스킬 없음";
+            createdButtons.Add(emptyButton);
         }
     }
 
@@ -126,7 +140,8 @@ public class SkillSlotBarUI : MonoBehaviour
         if (label != null)
             label.text = skill.DisplayName;
 
-        Image icon = button.transform.Find("Icon") != null ? button.transform.Find("Icon").GetComponent<Image>() : null;
+        Transform iconTransform = button.transform.Find("Icon");
+        Image icon = iconTransform != null ? iconTransform.GetComponent<Image>() : null;
         if (icon != null)
         {
             icon.sprite = skill.icon;
@@ -170,28 +185,41 @@ public class SkillSlotBarUI : MonoBehaviour
         panelRect.anchorMax = new Vector2(0f, 0f);
         panelRect.pivot = new Vector2(0f, 0f);
         panelRect.anchoredPosition = new Vector2(105f, 150f);
-        panelRect.sizeDelta = new Vector2(220f, 180f);
+        panelRect.sizeDelta = new Vector2(240f, 210f);
 
         Image panelImage = selectionPanel.AddComponent<Image>();
-        panelImage.color = new Color(0.03f, 0.04f, 0.06f, 0.86f);
+        panelImage.color = new Color(0.03f, 0.04f, 0.06f, 0.9f);
+
+        // 런타임 생성 패널이 기존 HUD 이미지 뒤에 깔리지 않도록 별도 Canvas로 정렬 순서를 올린다.
+        selectionCanvas = selectionPanel.AddComponent<Canvas>();
+        selectionCanvas.overrideSorting = true;
+        selectionCanvas.sortingOrder = 50;
+        selectionPanel.AddComponent<GraphicRaycaster>();
 
         VerticalLayoutGroup layout = selectionPanel.AddComponent<VerticalLayoutGroup>();
         layout.padding = new RectOffset(10, 10, 10, 10);
         layout.spacing = 6f;
         layout.childControlWidth = true;
         layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
 
         ContentSizeFitter fitter = selectionPanel.AddComponent<ContentSizeFitter>();
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        selectionTitleText = CreateText("Title", selectionPanel.transform, "Skill", 16, FontStyle.Bold);
+        selectionTitleText = CreateText("Title", selectionPanel.transform, "스킬 선택", 16, FontStyle.Bold);
         selectionContent = new GameObject("SkillList").AddComponent<RectTransform>();
         selectionContent.SetParent(selectionPanel.transform, false);
+
+        LayoutElement contentLayoutElement = selectionContent.gameObject.AddComponent<LayoutElement>();
+        contentLayoutElement.preferredHeight = 150f;
 
         VerticalLayoutGroup contentLayout = selectionContent.gameObject.AddComponent<VerticalLayoutGroup>();
         contentLayout.spacing = 4f;
         contentLayout.childControlWidth = true;
         contentLayout.childControlHeight = true;
+        contentLayout.childForceExpandWidth = true;
+        contentLayout.childForceExpandHeight = false;
     }
 
     private Button CreateDefaultButton(Transform parent)
@@ -203,8 +231,14 @@ public class SkillSlotBarUI : MonoBehaviour
         image.color = new Color(0.11f, 0.13f, 0.17f, 0.95f);
 
         Button button = go.AddComponent<Button>();
+        button.targetGraphic = image;
+
         RectTransform rect = go.GetComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(180f, 32f);
+        rect.sizeDelta = new Vector2(200f, 32f);
+
+        LayoutElement layoutElement = go.AddComponent<LayoutElement>();
+        layoutElement.minHeight = 32f;
+        layoutElement.preferredHeight = 32f;
 
         Text label = CreateText("Label", go.transform, "Skill", 14, FontStyle.Normal);
         RectTransform labelRect = label.GetComponent<RectTransform>();

@@ -3,6 +3,7 @@ using UnityEngine;
 public class PlayerAnimationEventRelay : MonoBehaviour
 {
     [SerializeField] private PlayerCombat combat;
+    [SerializeField] private PlayerSkillController skillController;
 
     private void Reset()
     {
@@ -18,12 +19,16 @@ public class PlayerAnimationEventRelay : MonoBehaviour
     {
         if (combat == null)
             combat = GetComponentInParent<PlayerCombat>();
+        if (skillController == null)
+            skillController = GetComponentInParent<PlayerSkillController>();
     }
 
     private void BindCombat()
     {
         if (combat == null)
             combat = GetComponentInParent<PlayerCombat>();
+        if (skillController == null)
+            skillController = GetComponentInParent<PlayerSkillController>();
     }
 
     public void OpenBasicAttackHitbox()
@@ -66,5 +71,27 @@ public class PlayerAnimationEventRelay : MonoBehaviour
     public void AE_AttackEnd()
     {
         CloseBasicAttackHitbox();
+    }
+
+    public void RisingSlashHit1()
+    {
+        BindCombat();
+        skillController?.RisingSlashHit1();
+    }
+
+    public void RisingSlashHit2()
+    {
+        BindCombat();
+        skillController?.RisingSlashHit2();
+    }
+
+    public void SkillHit1()
+    {
+        RisingSlashHit1();
+    }
+
+    public void SkillHit2()
+    {
+        RisingSlashHit2();
     }
 }

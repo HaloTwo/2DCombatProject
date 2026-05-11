@@ -58,12 +58,12 @@ public static class PrototypeSceneBuilder
         GameObject slamEffectPrefab = CreateSimpleEffectPrefab("SlamShockwaveEffect", new Color(1f, 0.72f, 0.25f, 0.78f), new Vector3(1.85f, 0.18f, 1f), 0.24f);
 
         SkillData skillDash = CreateSkillData("Skill_DashAttack", SkillType.DashAttack, dashAttack, 1.2f, 0.14f, 2.5f, 20f, null);
-        SkillData skillArea = CreateSkillData("Skill_AreaAttack", SkillType.AreaAttack, areaAttack, 2.0f, 0.18f, 2.2f, 0f, null);
+
         SkillData skillProjectile = CreateSkillData("Skill_ProjectileSlash", SkillType.Projectile, projectileAttack, 0.9f, 0.12f, 7f, 0f, playerProjectile);
         SkillData skillRising = CreateSkillData("Skill_RisingSlash", SkillType.RisingSlash, risingSlashAttack, 1.4f, 0.22f, 2.0f, 15f, null);
         SkillData skillSlam = CreateSkillData("Skill_GroundSlam", SkillType.GroundSlam, groundSlamAttack, 2.4f, 0.34f, 2.6f, 22f, null);
-        SkillData skillBackShot = CreateSkillData("Skill_BackStepShot", SkillType.BackStepShot, backStepShotAttack, 1.6f, 0.18f, 6f, 10f, playerProjectile);
-        SkillData[] playerSkills = { skillProjectile, skillArea, skillDash, skillRising, skillSlam, skillBackShot };
+      
+        SkillData[] playerSkills = { skillProjectile, skillDash, skillRising, skillSlam };
 
         GameObject playerPrefab = CreatePlayerPrefab(basicAttack, playerSkills, parryEffectPrefab, slashEffectPrefab, risingEffectPrefab, slamEffectPrefab);
         GameObject meleeEnemyPrefab = CreateMeleeEnemyPrefab(enemyMelee);

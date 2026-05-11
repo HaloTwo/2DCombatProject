@@ -420,7 +420,7 @@ MonoBehaviour:
   health: {fileID: 6316116087701598187}
   animator: {fileID: 8287005277241916383}
   playerTag: Player
-  detectRange: 8
+  detectRange: 6
   attackRange: 1.2
   moveSpeed: 1.15
   patrolWhenIdle: 1
@@ -442,7 +442,7 @@ MonoBehaviour:
   projectileAttackData: {fileID: 11400000, guid: ee0db2649bbb3814fb38917a87910fb2, type: 2}
   projectilePrefab: {fileID: 5912218434252096546, guid: e2108d409e9dfaf46bdbbb19206088ad, type: 3}
   firePoint: {fileID: 6588574951220383475}
-  keepDistance: 4.5
+  keepDistance: 3.8
   fireCooldown: 1.35
   attackMotionLockTime: 0.55
 --- !u!1 &7233898168522048960

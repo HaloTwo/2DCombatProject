@@ -6,6 +6,7 @@ public sealed class FocusModeController : MonoBehaviour
 {
     private static FocusModeController instance;
     private Coroutine focusRoutine;
+    private Coroutine previewRoutine;
 
     public static bool IsActive { get; private set; }
     public static float EnemySpeedMultiplier { get; private set; } = 1f;
@@ -32,6 +33,22 @@ public sealed class FocusModeController : MonoBehaviour
         ProjectileSpeedMultiplier = 1f;
     }
 
+    // 짧은 대시공격/연출용 슬로우다. 포커스 모드가 켜져 있으면 포커스 값을 건드리지 않는다.
+    public static void PlayBriefPreviewSlow(float duration, float enemySpeedMultiplier, float projectileSpeedMultiplier)
+    {
+        if (duration <= 0f || IsActive)
+            return;
+
+        EnsureInstance();
+
+        if (instance.previewRoutine != null)
+            instance.StopCoroutine(instance.previewRoutine);
+
+        instance.previewRoutine = instance.StartCoroutine(
+            instance.CoPreviewSlow(duration, enemySpeedMultiplier, projectileSpeedMultiplier)
+        );
+    }
+
     public static void Activate(float duration, float enemySpeedMultiplier, float projectileSpeedMultiplier)
     {
         if (duration <= 0f)
@@ -53,6 +70,12 @@ public sealed class FocusModeController : MonoBehaviour
         {
             instance.StopCoroutine(instance.focusRoutine);
             instance.focusRoutine = null;
+        }
+
+        if (instance != null && instance.previewRoutine != null)
+        {
+            instance.StopCoroutine(instance.previewRoutine);
+            instance.previewRoutine = null;
         }
 
         Restore();
@@ -90,6 +113,18 @@ public sealed class FocusModeController : MonoBehaviour
 
         focusRoutine = null;
         Restore();
+    }
+
+    private IEnumerator CoPreviewSlow(float duration, float enemySpeedMultiplier, float projectileSpeedMultiplier)
+    {
+        BeginPreviewSlow(enemySpeedMultiplier, projectileSpeedMultiplier);
+
+        float endTime = Time.unscaledTime + duration;
+        while (Time.unscaledTime < endTime && !IsActive)
+            yield return null;
+
+        previewRoutine = null;
+        EndPreviewSlow();
     }
 
     private static void Restore()

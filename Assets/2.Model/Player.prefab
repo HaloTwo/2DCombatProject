@@ -264,6 +264,8 @@ MonoBehaviour:
   platformDropVelocity: -3.5
   hitStunDuration: 0.18
   damageInvincibleDuration: 0.65
+  enemyCollisionIgnoreRadius: 12
+  enemyCollisionIgnoreInterval: 0.12
 --- !u!114 &1013361786693013830
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -319,7 +321,6 @@ MonoBehaviour:
   knockbackMultiplier: 0.1
   maxKnockbackX: 1.2
   maxKnockbackY: 0.7
-  flashTime: 0.08
   spawnDamageText: 0
   damageTextColor: {r: 1, g: 1, b: 1, a: 1}
   damageTextOffset: {x: 0, y: 0.45, z: 0}
@@ -365,13 +366,13 @@ MonoBehaviour:
   basicAttack: {fileID: 11400000, guid: ebe89d8c902de524ca43ae8ff7764eae, type: 2}
   animator: {fileID: 2260845058193702356}
   useAnimationEventHitTiming: 1
-  attackMotionTime: 0.42
-  attackStartupTime: 0.18
+  attackMotionTime: 0.25
+  attackStartupTime: 0.16
   comboInputWindow: 0.5
   attackMoveLockTime: 0.36
   attack1StepSpeed: 2.5
-  attack2StepSpeed: 3.3
-  attackStepDuration: 0.08
+  attack2StepSpeed: 3.5
+  attackStepDuration: 0.1
 --- !u!114 &8513724251962214074
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -388,20 +389,45 @@ MonoBehaviour:
   movement: {fileID: 4530850618612268224}
   rb: {fileID: 8945240710127607946}
   animator: {fileID: 0}
+  heroAnimator: {fileID: 0}
   skillHitbox: {fileID: 2220936521829097214}
   projectileSpawnPoint: {fileID: 583320727286823383}
   skillOne: {fileID: 11400000, guid: a634d27b21d90144db1f3fabec1aa657, type: 2}
-  skillTwo: {fileID: 11400000, guid: de0f425d861565a4ea7177638baad68e, type: 2}
+  skillTwo: {fileID: 11400000, guid: 5ff250a2b813c62498fecd14bfcb6fcf, type: 2}
   availableSkills:
   - {fileID: 11400000, guid: a634d27b21d90144db1f3fabec1aa657, type: 2}
-  - {fileID: 11400000, guid: de0f425d861565a4ea7177638baad68e, type: 2}
   - {fileID: 11400000, guid: 5ff250a2b813c62498fecd14bfcb6fcf, type: 2}
   - {fileID: 11400000, guid: 10664ae586775824a8524245684db630, type: 2}
   - {fileID: 11400000, guid: 1bde3c2ededab014fbd58bfe2b92ea38, type: 2}
-  - {fileID: 11400000, guid: a25010a3f9342a44f92021cf22b23d56, type: 2}
   slashEffectPrefab: {fileID: 99670727572316380, guid: 0f868423b43374c47b4a2ab423ea62a6, type: 3}
   risingEffectPrefab: {fileID: 701568740615211414, guid: 10de8cf96ea31d1428d784d64b935a63, type: 3}
   slamEffectPrefab: {fileID: 2113935620815546934, guid: 437b21ca2f5182049bd524f9c94fdae7, type: 3}
+  slamDustPrefab: {fileID: 0}
+  hitFlashEffectPrefab: {fileID: 8690950337773083281, guid: 803b96fa8ebd5a749bdf32bd0e553139, type: 3}
+  groundSlamRadius: 2.3
+  groundSlamKnockbackForce: 8.5
+  groundSlamKnockbackUpForce: 2.2
+  groundSlamShakeDuration: 0.12
+  groundSlamShakePower: 0.13
+  groundSlamHitStop: 0.06
+  groundSlamMaxFallWait: 0.65
+  groundSlamJumpPower: 8.5
+  groundSlamDiveDelay: 0.16
+  skillInputLockPadding: 0.15
+  projectileStartupDelay: 0.08
+  skillShakeDuration: 0.1
+  skillShakePower: 0.1
+  projectileRecoilSpeed: 2.2
+  dashAttackSlowDuration: 0.1
+  dashAttackEnemySlowMultiplier: 0.1
+  dashAttackProjectileSlowMultiplier: 0.35
+  dashAttackPathHeight: 1.15
+  dashAttackPathPadding: 0.75
+  risingSlashAreaSize: {x: 2.1, y: 1.5}
+  risingSlashAreaOffset: {x: 0.85, y: 0.45}
+  risingSlashEnemyLiftForce: 9
+  risingSlashSelfLiftForce: 8.5
+  risingSlashForwardForce: 2.5
 --- !u!114 &6400000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -646,6 +672,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   combat: {fileID: 2530577442337316834}
+  skillController: {fileID: 8513724251962214074}
 --- !u!1 &9184041148785188305
 GameObject:
   m_ObjectHideFlags: 0

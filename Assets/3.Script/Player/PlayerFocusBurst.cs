@@ -117,7 +117,7 @@ public class PlayerFocusBurst : MonoBehaviour
             return;
 
         Vector2 center = GetEffectCenter();
-        ContactFilter2D filter = new ContactFilter2D { useTriggers = false };
+        ContactFilter2D filter = new ContactFilter2D { useTriggers = true };
         int count = Physics2D.OverlapCircle(center, radius, filter, hits);
 
         for (int i = 0; i < count; i++)
@@ -142,9 +142,6 @@ public class PlayerFocusBurst : MonoBehaviour
 
     private void KnockbackEnemy(Collider2D hit, Vector2 center)
     {
-        if (hit.isTrigger)
-            return;
-
         Health enemyHealth = hit.GetComponentInParent<Health>();
         if (enemyHealth == null || enemyHealth.Team != Team.Enemy || enemyHealth.IsDead)
             return;

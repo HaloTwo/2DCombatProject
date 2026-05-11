@@ -38,6 +38,10 @@ public class PlayerMovement2D : MonoBehaviour
     [SerializeField, KoreanLabel("피격 경직 시간")] private float hitStunDuration = 0.18f;
     [SerializeField, KoreanLabel("피격 무적 시간")] private float damageInvincibleDuration = 0.65f;
 
+    [Header("충돌 보정")]
+    [SerializeField, KoreanLabel("적 충돌 무시 갱신 반경")] private float enemyCollisionIgnoreRadius = 12f;
+    [SerializeField, KoreanLabel("적 충돌 무시 갱신 주기")] private float enemyCollisionIgnoreInterval = 0.12f;
+
     private float facing = 1f;
     private float lastGroundedTime;
     private float lastGroundContactTime = -999f;
@@ -46,14 +50,18 @@ public class PlayerMovement2D : MonoBehaviour
     private float controlLockedUntilTime;
     private float moveSpeedMultiplier = 1f;
     private Coroutine speedBuffRoutine;
+    private readonly List<MoveSpeedBuffEntry> moveSpeedBuffs = new();
     private Coroutine attackStepRoutine;
     private int jumpCount;
     private bool isDashing;
     private bool isAttackStepping;
+    private bool attackStepPassesEnemies;
     private Collider2D currentOneWayPlatform;
     private Collider2D[] ownColliders;
     private PhysicsMaterial2D noFrictionMaterial;
     private readonly List<ColliderPair> ignoredDashCollisions = new();
+    private readonly Collider2D[] enemyIgnoreBuffer = new Collider2D[96];
+    private float nextEnemyCollisionIgnoreTime;
 
     public static PlayerMovement2D Instance { get; private set; }
     public float Facing => facing;
@@ -132,13 +140,19 @@ public class PlayerMovement2D : MonoBehaviour
         if (isDashing || input == null) return;
 
         if (isAttackStepping)
+        {
+            RefreshEnemyCollisionIgnores();
             return;
+        }
 
         if (IsControlLocked())
         {
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            RefreshEnemyCollisionIgnores();
             return;
         }
+
+        RefreshEnemyCollisionIgnores();
 
         float moveX = input.Move.x;
         if (IsBlockedHorizontally(moveX))
@@ -164,15 +178,18 @@ public class PlayerMovement2D : MonoBehaviour
     }
 
     // 평타 1타/2타에서 짧게 앞으로 밀어주는 연출용 이동이다. 일반 이동 잠금과 별도로 FixedUpdate 덮어쓰기를 피한다.
-    public void ApplyAttackStep(float speed, float duration)
+    public void ApplyAttackStep(float speed, float duration, bool passThroughEnemies = false)
     {
         if (speed <= 0f || duration <= 0f || rb == null || isDashing)
             return;
 
         if (attackStepRoutine != null)
+        {
             StopCoroutine(attackStepRoutine);
+            EndAttackStepPassThrough();
+        }
 
-        attackStepRoutine = StartCoroutine(CoAttackStep(speed, duration));
+        attackStepRoutine = StartCoroutine(CoAttackStep(speed, duration, passThroughEnemies));
     }
 
     public void StopAttackStep()
@@ -184,33 +201,63 @@ public class PlayerMovement2D : MonoBehaviour
         }
 
         isAttackStepping = false;
+        EndAttackStepPassThrough();
+
         if (!isDashing && rb != null)
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
     }
 
-    // 버프 아이템에서 호출한다. 기존 버프가 남아있으면 새 지속 시간과 배율로 교체한다.
+    // 버프 아이템에서 호출한다. 여러 속도 버프를 독립 엔트리로 쌓고, 살아있는 버프 중 가장 높은 배율을 적용한다.
     public void SetTemporaryMoveSpeedMultiplier(float multiplier, float duration)
     {
         if (duration <= 0f)
             return;
 
-        if (speedBuffRoutine != null)
-            StopCoroutine(speedBuffRoutine);
+        moveSpeedBuffs.Add(new MoveSpeedBuffEntry(Mathf.Max(0.1f, multiplier), Time.time + duration));
+        RefreshMoveSpeedMultiplier();
 
-        speedBuffRoutine = StartCoroutine(CoMoveSpeedBuff(Mathf.Max(0.1f, multiplier), duration));
+        if (speedBuffRoutine != null)
+            return;
+
+        speedBuffRoutine = StartCoroutine(CoMoveSpeedBuff());
     }
 
-    private IEnumerator CoMoveSpeedBuff(float multiplier, float duration)
+    private IEnumerator CoMoveSpeedBuff()
     {
-        moveSpeedMultiplier = multiplier;
-        yield return new WaitForSeconds(duration);
+        while (moveSpeedBuffs.Count > 0)
+        {
+            RefreshMoveSpeedMultiplier();
+            yield return null;
+        }
+
         moveSpeedMultiplier = 1f;
         speedBuffRoutine = null;
     }
 
-    private IEnumerator CoAttackStep(float speed, float duration)
+    private void RefreshMoveSpeedMultiplier()
+    {
+        float multiplier = 1f;
+        for (int i = moveSpeedBuffs.Count - 1; i >= 0; i--)
+        {
+            if (Time.time >= moveSpeedBuffs[i].EndTime)
+            {
+                moveSpeedBuffs.RemoveAt(i);
+                continue;
+            }
+
+            multiplier = Mathf.Max(multiplier, moveSpeedBuffs[i].Multiplier);
+        }
+
+        moveSpeedMultiplier = multiplier;
+    }
+
+    private IEnumerator CoAttackStep(float speed, float duration, bool passThroughEnemies)
     {
         isAttackStepping = true;
+        attackStepPassesEnemies = passThroughEnemies;
+        if (attackStepPassesEnemies)
+            BeginDashEnemyPassThrough();
+
         float endTime = Time.time + duration;
 
         while (Time.time < endTime && !isDashing)
@@ -223,6 +270,7 @@ public class PlayerMovement2D : MonoBehaviour
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
 
         isAttackStepping = false;
+        EndAttackStepPassThrough();
         attackStepRoutine = null;
     }
 
@@ -328,6 +376,12 @@ public class PlayerMovement2D : MonoBehaviour
 
     private void OnCollisionStay2D(Collision2D collision)
     {
+        if (IsEnemyCollider(collision.collider))
+        {
+            IgnoreCollisionWithEnemy(collision.collider);
+            return;
+        }
+
         if (!IsGroundLayer(collision.collider))
             return;
 
@@ -349,6 +403,12 @@ public class PlayerMovement2D : MonoBehaviour
     {
         if (collision.collider == currentOneWayPlatform)
             currentOneWayPlatform = null;
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (IsEnemyCollider(collision.collider))
+            IgnoreCollisionWithEnemy(collision.collider);
     }
 
     // 수평 이동 방향을 실제로 막는 벽만 차단한다. 뒤쪽 벽이나 코너 겹침 때문에 이동이 멈추지 않게 한다.
@@ -504,8 +564,9 @@ public class PlayerMovement2D : MonoBehaviour
                 if (target == null || target.isTrigger || IsOwnCollider(target) || !IsEnemyCollider(target))
                     continue;
 
+                bool wasIgnored = Physics2D.GetIgnoreCollision(own, target);
                 Physics2D.IgnoreCollision(own, target, true);
-                ignoredDashCollisions.Add(new ColliderPair(own, target));
+                ignoredDashCollisions.Add(new ColliderPair(own, target, wasIgnored));
             }
         }
     }
@@ -516,10 +577,57 @@ public class PlayerMovement2D : MonoBehaviour
         {
             ColliderPair pair = ignoredDashCollisions[i];
             if (pair.A != null && pair.B != null)
-                Physics2D.IgnoreCollision(pair.A, pair.B, false);
+                Physics2D.IgnoreCollision(pair.A, pair.B, IsEnemyCollider(pair.B) || pair.WasIgnored);
         }
 
         ignoredDashCollisions.Clear();
+    }
+
+    // 플레이어와 적은 길막 물리가 없어야 한다. 스폰/풀/대시 타이밍에 충돌 상태가 풀려도 여기서 다시 고정한다.
+    private void RefreshEnemyCollisionIgnores()
+    {
+        if (Time.time < nextEnemyCollisionIgnoreTime || enemyCollisionIgnoreRadius <= 0f)
+            return;
+
+        nextEnemyCollisionIgnoreTime = Time.time + Mathf.Max(0.02f, enemyCollisionIgnoreInterval);
+        Vector2 center = rb != null ? rb.position : (Vector2)transform.position;
+        ContactFilter2D filter = new ContactFilter2D { useTriggers = false };
+        int count = Physics2D.OverlapCircle(center, enemyCollisionIgnoreRadius, filter, enemyIgnoreBuffer);
+
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D enemyCollider = enemyIgnoreBuffer[i];
+            enemyIgnoreBuffer[i] = null;
+
+            if (enemyCollider == null || !IsEnemyCollider(enemyCollider))
+                continue;
+
+            IgnoreCollisionWithEnemy(enemyCollider);
+        }
+    }
+
+    private void IgnoreCollisionWithEnemy(Collider2D enemyCollider)
+    {
+        if (enemyCollider == null || enemyCollider.isTrigger || ownColliders == null)
+            return;
+
+        for (int i = 0; i < ownColliders.Length; i++)
+        {
+            Collider2D own = ownColliders[i];
+            if (own == null || own.isTrigger)
+                continue;
+
+            Physics2D.IgnoreCollision(own, enemyCollider, true);
+        }
+    }
+
+    private void EndAttackStepPassThrough()
+    {
+        if (!attackStepPassesEnemies || isDashing)
+            return;
+
+        EndDashEnemyPassThrough();
+        attackStepPassesEnemies = false;
     }
 
     private static bool IsEnemyCollider(Collider2D target)
@@ -551,11 +659,25 @@ public class PlayerMovement2D : MonoBehaviour
     {
         public readonly Collider2D A;
         public readonly Collider2D B;
+        public readonly bool WasIgnored;
 
-        public ColliderPair(Collider2D a, Collider2D b)
+        public ColliderPair(Collider2D a, Collider2D b, bool wasIgnored)
         {
             A = a;
             B = b;
+            WasIgnored = wasIgnored;
+        }
+    }
+
+    private readonly struct MoveSpeedBuffEntry
+    {
+        public readonly float Multiplier;
+        public readonly float EndTime;
+
+        public MoveSpeedBuffEntry(float multiplier, float endTime)
+        {
+            Multiplier = multiplier;
+            EndTime = endTime;
         }
     }
 }

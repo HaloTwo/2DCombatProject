@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectPool : MonoBehaviour
+public class ObjectPool : Singleton<ObjectPool>
 {
     [System.Serializable]
     public class PoolEntry
@@ -21,17 +21,11 @@ public class ObjectPool : MonoBehaviour
 
     private readonly Dictionary<GameObject, Pool> pools = new();
 
-    public static ObjectPool Instance { get; private set; }
-
-    private void Awake()
+    protected override void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
+        base.Awake();
+        if (Instance != this)
             return;
-        }
-
-        Instance = this;
 
         for (int i = 0; i < initialPools.Count; i++)
         {

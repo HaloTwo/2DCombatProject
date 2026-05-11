@@ -5,21 +5,14 @@ using UnityEngine.UI;
 
 public class BuffStatusView : MonoBehaviour
 {
-    private sealed class Entry
-    {
-        public BuffItemType Type;
-        public RectTransform Root;
-        public Image Fill;
-        public Text TimeText;
-        public float StartTime;
-        public float Duration;
-        public float EndTime;
-    }
-
     [SerializeField, KoreanLabel("버프 목록 루트")] private RectTransform listRoot;
-    [SerializeField, KoreanLabel("슬롯 크기")] private float slotSize = 44f;
+    [SerializeField, KoreanLabel("버프 슬롯 프리팹")] private BuffStatusSlotUI slotPrefab;
+    [SerializeField, KoreanLabel("슬롯 크기")] private float slotSize = 70f;
+    [SerializeField, KoreanLabel("슬롯 간격")] private float slotSpacing = 6f;
+    [SerializeField, KoreanLabel("초기 풀 크기")] private int prewarmCount = 4;
 
-    private readonly List<Entry> entries = new();
+    private readonly List<BuffStatusSlotUI> activeSlots = new();
+    private readonly Queue<BuffStatusSlotUI> pooledSlots = new();
     private static BuffStatusView instance;
     private static Sprite circleSprite;
 
@@ -27,6 +20,7 @@ public class BuffStatusView : MonoBehaviour
     {
         instance = this;
         EnsureListRoot();
+        Prewarm();
     }
 
     private void OnDestroy()
@@ -37,26 +31,14 @@ public class BuffStatusView : MonoBehaviour
 
     private void Update()
     {
-        for (int i = entries.Count - 1; i >= 0; i--)
+        for (int i = activeSlots.Count - 1; i >= 0; i--)
         {
-            Entry entry = entries[i];
-            float remaining = entry.EndTime - Time.time;
-
-            if (remaining <= 0f)
-            {
-                if (entry.Root != null)
-                    Destroy(entry.Root.gameObject);
-
-                entries.RemoveAt(i);
+            BuffStatusSlotUI slot = activeSlots[i];
+            if (slot == null || slot.UpdateView())
                 continue;
-            }
 
-            float ratio = entry.Duration <= 0f ? 0f : Mathf.Clamp01(remaining / entry.Duration);
-            if (entry.Fill != null)
-                entry.Fill.fillAmount = ratio;
-
-            if (entry.TimeText != null)
-                entry.TimeText.text = remaining.ToString("0.0");
+            activeSlots.RemoveAt(i);
+            ReleaseSlot(slot);
         }
     }
 
@@ -69,86 +51,97 @@ public class BuffStatusView : MonoBehaviour
     {
         EnsureListRoot();
 
-        Entry entry = FindEntry(type);
-        if (entry == null)
-        {
-            entry = CreateEntry(type);
-            entries.Add(entry);
-        }
+        // 같은 버프를 여러 번 먹어도 슬롯을 합치지 않고, 각 슬롯이 자기 지속 시간으로 따로 돈다.
+        BuffStatusSlotUI slot = GetSlot();
+        slot.transform.SetParent(listRoot, false);
+        slot.Initialize(type, duration, slotSize, GetCircleSprite(), GetBuffColor(type));
+        activeSlots.Add(slot);
 
-        entry.StartTime = Time.time;
-        entry.Duration = Mathf.Max(0.1f, duration);
-        entry.EndTime = entry.StartTime + entry.Duration;
-        StartCoroutine(CoPop(entry.Root));
+        StartCoroutine(CoPop(slot.transform));
+        LayoutRebuilder.ForceRebuildLayoutImmediate(listRoot);
     }
 
-    private Entry FindEntry(BuffItemType type)
+    private void Prewarm()
     {
-        for (int i = 0; i < entries.Count; i++)
-        {
-            if (entries[i].Type == type)
-                return entries[i];
-        }
-
-        return null;
+        int count = Mathf.Max(0, prewarmCount);
+        for (int i = 0; i < count; i++)
+            ReleaseSlot(CreateSlot());
     }
 
-    private Entry CreateEntry(BuffItemType type)
+    private BuffStatusSlotUI GetSlot()
     {
-        GameObject go = new GameObject($"{type}BuffSlot");
-        go.transform.SetParent(listRoot, false);
+        while (pooledSlots.Count > 0)
+        {
+            BuffStatusSlotUI slot = pooledSlots.Dequeue();
+            if (slot != null)
+                return slot;
+        }
 
-        RectTransform rect = go.AddComponent<RectTransform>();
-        rect.sizeDelta = new Vector2(slotSize, slotSize);
+        return CreateSlot();
+    }
 
-        Image background = go.AddComponent<Image>();
-        background.sprite = GetCircleSprite();
-        background.color = new Color(0f, 0f, 0f, 0.72f);
+    private BuffStatusSlotUI CreateSlot()
+    {
+        BuffStatusSlotUI slot;
+        if (slotPrefab != null)
+        {
+            slot = Instantiate(slotPrefab, listRoot);
+        }
+        else
+        {
+            GameObject go = new GameObject("BuffStatusSlot");
+            go.transform.SetParent(listRoot, false);
+            go.AddComponent<RectTransform>();
+            slot = go.AddComponent<BuffStatusSlotUI>();
+        }
 
-        Image icon = CreateImage("Icon", rect, GetBuffColor(type), new Vector2(0.12f, 0.12f), new Vector2(0.88f, 0.88f));
-        icon.sprite = GetCircleSprite();
+        slot.Initialize(BuffItemType.FocusGauge, 0.1f, slotSize, GetCircleSprite(), Color.white);
+        return slot;
+    }
 
-        Image fill = CreateImage("CooldownFill", rect, new Color(0f, 0f, 0f, 0.58f), Vector2.zero, Vector2.one);
-        fill.sprite = GetCircleSprite();
-        fill.type = Image.Type.Filled;
-        fill.fillMethod = Image.FillMethod.Radial360;
-        fill.fillOrigin = (int)Image.Origin360.Top;
-        fill.fillClockwise = true;
-        fill.fillAmount = 1f;
+    private void ReleaseSlot(BuffStatusSlotUI slot)
+    {
+        if (slot == null)
+            return;
 
-        Text timeText = new GameObject("TimeText").AddComponent<Text>();
-        timeText.transform.SetParent(rect, false);
-        timeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        timeText.fontSize = 14;
-        timeText.fontStyle = FontStyle.Bold;
-        timeText.alignment = TextAnchor.MiddleCenter;
-        timeText.color = Color.white;
-        timeText.raycastTarget = false;
-
-        RectTransform textRect = timeText.GetComponent<RectTransform>();
-        Stretch(textRect, Vector2.zero, Vector2.one);
-
-        return new Entry { Type = type, Root = rect, Fill = fill, TimeText = timeText };
+        slot.ClearView();
+        slot.gameObject.SetActive(false);
+        slot.transform.SetParent(listRoot, false);
+        pooledSlots.Enqueue(slot);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(listRoot);
     }
 
     private void EnsureListRoot()
     {
-        if (listRoot != null)
-            return;
-
-        listRoot = GetComponent<RectTransform>();
+        if (listRoot == null)
+            listRoot = GetComponent<RectTransform>();
         if (listRoot == null)
             listRoot = gameObject.AddComponent<RectTransform>();
 
-        HorizontalLayoutGroup layout = gameObject.GetComponent<HorizontalLayoutGroup>();
+        ConfigureLayout(listRoot.gameObject);
+    }
+
+    // 버프 슬롯이 여러 개 생겨도 겹치거나 늘어나지 않도록 UGUI 자동 정렬을 고정한다.
+    private void ConfigureLayout(GameObject target)
+    {
+        HorizontalLayoutGroup layout = target.GetComponent<HorizontalLayoutGroup>();
         if (layout == null)
-        {
-            layout = gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 6f;
-            layout.childControlWidth = false;
-            layout.childControlHeight = false;
-            layout.childAlignment = TextAnchor.MiddleLeft;
-        }
+            layout = target.AddComponent<HorizontalLayoutGroup>();
+
+        layout.padding = new RectOffset(0, 0, 0, 0);
+        layout.spacing = slotSpacing;
+        layout.childAlignment = TextAnchor.MiddleLeft;
+        layout.childControlWidth = false;
+        layout.childControlHeight = false;
+        layout.childForceExpandWidth = false;
+        layout.childForceExpandHeight = false;
+
+        ContentSizeFitter fitter = target.GetComponent<ContentSizeFitter>();
+        if (fitter == null)
+            fitter = target.AddComponent<ContentSizeFitter>();
+
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
     }
 
     private IEnumerator CoPop(Transform target)
@@ -158,7 +151,9 @@ public class BuffStatusView : MonoBehaviour
 
         target.localScale = Vector3.one * 1.16f;
         yield return new WaitForSecondsRealtime(0.08f);
-        target.localScale = Vector3.one;
+
+        if (target != null)
+            target.localScale = Vector3.one;
     }
 
     private static BuffStatusView EnsureInstance()
@@ -184,8 +179,8 @@ public class BuffStatusView : MonoBehaviour
         rect.anchorMin = new Vector2(0f, 0f);
         rect.anchorMax = new Vector2(0f, 0f);
         rect.pivot = new Vector2(0f, 0f);
-        rect.anchoredPosition = new Vector2(286f, 74f);
-        rect.sizeDelta = new Vector2(160f, 48f);
+        rect.anchoredPosition = new Vector2(530f, 6f);
+        rect.sizeDelta = new Vector2(0f, 90f);
 
         instance = root.AddComponent<BuffStatusView>();
         return instance;
@@ -201,25 +196,6 @@ public class BuffStatusView : MonoBehaviour
         return canvas != null ? canvas.transform : null;
     }
 
-    private static Image CreateImage(string objectName, Transform parent, Color color, Vector2 anchorMin, Vector2 anchorMax)
-    {
-        GameObject go = new GameObject(objectName);
-        go.transform.SetParent(parent, false);
-        Image image = go.AddComponent<Image>();
-        image.color = color;
-        image.raycastTarget = false;
-        Stretch(go.GetComponent<RectTransform>(), anchorMin, anchorMax);
-        return image;
-    }
-
-    private static void Stretch(RectTransform target, Vector2 anchorMin, Vector2 anchorMax)
-    {
-        target.anchorMin = anchorMin;
-        target.anchorMax = anchorMax;
-        target.offsetMin = Vector2.zero;
-        target.offsetMax = Vector2.zero;
-    }
-
     private static Color GetBuffColor(BuffItemType type)
     {
         return type switch
@@ -227,6 +203,7 @@ public class BuffStatusView : MonoBehaviour
             BuffItemType.MoveSpeed => new Color(0.22f, 1f, 0.46f, 0.95f),
             BuffItemType.AttackPower => new Color(1f, 0.18f, 0.18f, 0.95f),
             BuffItemType.FocusGauge => new Color(1f, 0.18f, 0.85f, 0.95f),
+            BuffItemType.Invincible => new Color(0.45f, 0.9f, 1f, 0.95f),
             _ => Color.white
         };
     }

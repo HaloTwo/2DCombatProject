@@ -8,6 +8,7 @@ public class RangedShooterEnemy : EnemyBrainBase
     [SerializeField, KoreanLabel("유지 거리")] private float keepDistance = 4f;
     [SerializeField, KoreanLabel("발사 쿨타임")] private float fireCooldown = 1.25f;
     [SerializeField, KoreanLabel("공격 중 정지 시간")] private float attackMotionLockTime = 0.55f;
+    [SerializeField, KoreanLabel("포물선 조준 높이 보정")] private float arcTargetHeightOffset = 0.35f;
 
     private float nextFireTime;
     private float attackLockedUntilTime;
@@ -35,18 +36,13 @@ public class RangedShooterEnemy : EnemyBrainBase
             return;
         }
 
-        if (Mathf.Abs(toTarget.x) < keepDistance)
-        {
+        float distanceX = Mathf.Abs(toTarget.x);
+        if (distanceX < keepDistance)
             MoveHorizontally(-Mathf.Sign(toTarget.x));
-        }
-        else if (Mathf.Abs(toTarget.x) > keepDistance + 1f)
-        {
+        else if (distanceX > keepDistance + 1f)
             MoveHorizontally(Mathf.Sign(toTarget.x));
-        }
         else
-        {
             StopMove();
-        }
 
         TryFire();
     }
@@ -82,7 +78,7 @@ public class RangedShooterEnemy : EnemyBrainBase
             animator.SetTrigger("Attack");
     }
 
-    // 원거리 공격 애니메이션에서 투사체가 손/입/지팡이를 떠나는 프레임에 호출한다.
+    // 원거리 공격 애니메이션의 던지는 프레임에서 호출한다.
     public void FireProjectileByAnimationEvent()
     {
         if (projectilePrefab == null || projectileAttackData == null)
@@ -98,7 +94,13 @@ public class RangedShooterEnemy : EnemyBrainBase
             : Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
 
         if (go.TryGetComponent(out Projectile projectile))
-            projectile.Fire(Team.Enemy, Vector2.right * facing, projectileAttackData);
+        {
+            Vector2 targetPosition = target != null
+                ? (Vector2)target.position + Vector2.up * arcTargetHeightOffset
+                : (Vector2)spawnPos + Vector2.right * facing * keepDistance;
+
+            projectile.FireArc(Team.Enemy, targetPosition, projectileAttackData);
+        }
     }
 
     public void FireProjectile()

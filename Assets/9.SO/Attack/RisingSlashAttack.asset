@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f902a67326789164ab3ad62a96ae4ef6, type: 3}
   m_Name: RisingSlashAttack
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  damage: 16
-  knockback: {x: 4, y: 8}
-  hitStopTime: 0.07
+  damage: 18
+  knockback: {x: 4.5, y: 9.5}
+  hitStopTime: 0.08
   activeTime: 0.18
   cooldown: 0.7

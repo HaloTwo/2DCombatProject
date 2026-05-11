@@ -90,6 +90,8 @@ public class PlayerCombat : MonoBehaviour
         if (animator != null)
             animator.SetTrigger(attackTrigger);
 
+        SoundManager.Instance?.PlaySFX(SFXType.Attack);
+
         if (useAnimationEventHitTiming)
         {
             yield return new WaitForSeconds(attackMotionTime);

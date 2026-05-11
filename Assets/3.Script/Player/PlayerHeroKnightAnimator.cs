@@ -25,6 +25,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
     private bool isDead;
     private float nextDashGhostTime;
     private Color originColor = Color.white;
+    private Coroutine dashGhostBurstRoutine;
 
     private void Reset()
     {
@@ -51,6 +52,12 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
 
         health.OnDamaged -= HandleDamaged;
         health.OnDead -= HandleDead;
+
+        if (dashGhostBurstRoutine != null)
+        {
+            StopCoroutine(dashGhostBurstRoutine);
+            dashGhostBurstRoutine = null;
+        }
     }
 
     private void Update()
@@ -159,6 +166,43 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
     private void SpawnDashGhost()
     {
         nextDashGhostTime = Time.time + dashGhostInterval;
+        SpawnGhost(dashGhostColor);
+    }
+
+    // 대시 스킬처럼 Movement의 IsDashing이 켜지지 않는 액션에서도 같은 잔상 연출을 재사용한다.
+    public void PlayDashGhostBurst(float duration)
+    {
+        if (duration <= 0f || spriteRenderer == null)
+            return;
+
+        if (dashGhostBurstRoutine != null)
+            StopCoroutine(dashGhostBurstRoutine);
+
+        dashGhostBurstRoutine = StartCoroutine(CoDashGhostBurst(duration));
+    }
+
+    private IEnumerator CoDashGhostBurst(float duration)
+    {
+        Color cachedOrigin = spriteRenderer.color;
+        spriteRenderer.color = new Color(cachedOrigin.r, cachedOrigin.g, cachedOrigin.b, dashAlpha);
+
+        float endTime = Time.time + duration;
+        while (Time.time < endTime)
+        {
+            SpawnGhost(dashGhostColor);
+            yield return new WaitForSeconds(dashGhostInterval);
+        }
+
+        if ((movement == null || !movement.IsDashing) && spriteRenderer != null)
+            spriteRenderer.color = cachedOrigin;
+
+        dashGhostBurstRoutine = null;
+    }
+
+    private void SpawnGhost(Color color)
+    {
+        if (spriteRenderer == null)
+            return;
 
         GameObject ghost = new GameObject("DashGhost");
         ghost.transform.position = spriteRenderer.transform.position;
@@ -171,7 +215,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
         renderer.flipY = spriteRenderer.flipY;
         renderer.sortingLayerID = spriteRenderer.sortingLayerID;
         renderer.sortingOrder = spriteRenderer.sortingOrder - 1;
-        renderer.color = dashGhostColor;
+        renderer.color = color;
 
         StartCoroutine(CoFadeDashGhost(renderer, ghost));
     }

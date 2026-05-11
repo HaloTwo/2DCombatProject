@@ -1,10 +1,8 @@
 using UnityEngine;
 using System.Collections;
 
-public class GameManager : MonoBehaviour
+public class GameManager : Singleton<GameManager>
 {
-    public static GameManager Instance { get; private set; }
-
     [SerializeField] private GameState state = GameState.Ready;
 
     [Header("게임오버 연출")]
@@ -15,17 +13,6 @@ public class GameManager : MonoBehaviour
 
     public GameState State => state;
     public bool CanShowGameOverMenu { get; private set; }
-
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-    }
 
     public void StartGame()
     {

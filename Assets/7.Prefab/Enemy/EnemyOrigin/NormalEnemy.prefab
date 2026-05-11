@@ -459,7 +459,7 @@ MonoBehaviour:
   health: {fileID: 119711015400734301}
   animator: {fileID: 8387379952187272325}
   playerTag: Player
-  detectRange: 8
+  detectRange: 5.5
   attackRange: 0.5
   moveSpeed: 1.55
   patrolWhenIdle: 1

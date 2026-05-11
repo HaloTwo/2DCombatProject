@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f902a67326789164ab3ad62a96ae4ef6, type: 3}
   m_Name: DashAttack
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  damage: 14
-  knockback: {x: 10, y: 2}
-  hitStopTime: 0.065
-  activeTime: 0.16
+  damage: 16
+  knockback: {x: 11.5, y: 2.4}
+  hitStopTime: 0.075
+  activeTime: 0.17
   cooldown: 0.4

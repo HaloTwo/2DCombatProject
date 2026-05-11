@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f902a67326789164ab3ad62a96ae4ef6, type: 3}
   m_Name: PlayerProjectileAttack
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  damage: 11
-  knockback: {x: 6, y: 1.5}
-  hitStopTime: 0.045
+  damage: 13
+  knockback: {x: 7.5, y: 1.8}
+  hitStopTime: 0.055
   activeTime: 0.12
   cooldown: 0.55
