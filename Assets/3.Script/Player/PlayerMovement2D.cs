@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerMovement2D : MonoBehaviour
+public class PlayerMovement2D : Singleton<PlayerMovement2D>
 {
     [SerializeField, KoreanLabel("입력 리더")] private PlayerInputReader input;
     [SerializeField, KoreanLabel("리지드바디")] private Rigidbody2D rb;
@@ -63,7 +63,6 @@ public class PlayerMovement2D : MonoBehaviour
     private readonly Collider2D[] enemyIgnoreBuffer = new Collider2D[96];
     private float nextEnemyCollisionIgnoreTime;
 
-    public static PlayerMovement2D Instance { get; private set; }
     public float Facing => facing;
     public bool IsDashing => isDashing;
     public bool IsGrounded { get; private set; }
@@ -78,9 +77,11 @@ public class PlayerMovement2D : MonoBehaviour
         input = GetComponent<PlayerInputReader>();
     }
 
-    private void Awake()
+    protected override void Awake()
     {
-        Instance = this;
+        base.Awake();
+        if (Instance != this)
+            return;
 
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         if (input == null) input = GetComponent<PlayerInputReader>();
@@ -102,8 +103,6 @@ public class PlayerMovement2D : MonoBehaviour
         if (health != null)
             health.OnDamaged -= HandleDamaged;
 
-        if (Instance == this)
-            Instance = null;
     }
 
     private void Update()

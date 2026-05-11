@@ -3,20 +3,33 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 
-public class WaveManager : MonoBehaviour
+public class WaveManager : Singleton<WaveManager>
 {
     [SerializeField] private List<WaveData> waves = new();
     [SerializeField] private List<EnemySpawnPoint> spawnPoints = new();
+    [SerializeField] private float waveIntroTime = 1f;
+    [SerializeField] private float waveClearHoldTime = 1f;
+    [SerializeField] private int countdownStart = 3;
 
     private readonly List<Health> aliveEnemies = new();
     private int currentWaveIndex = -1;
+    private int currentWaveTotal;
+    private int currentWaveKilled;
     private bool isRunning;
 
     public static event Action<int> OnWaveCleared;
     public static event Action OnAllWavesCleared;
 
+    protected override void Awake()
+    {
+        base.Awake();
+    }
+
     private void Start()
     {
+        if (Instance != this)
+            return;
+
         StartWaves();
     }
 
@@ -24,6 +37,8 @@ public class WaveManager : MonoBehaviour
     {
         if (isRunning) return;
 
+        ClearAliveEnemySubscriptions();
+        currentWaveIndex = -1;
         isRunning = true;
         StartCoroutine(CoRunWaves());
     }
@@ -36,11 +51,23 @@ public class WaveManager : MonoBehaviour
             WaveData wave = waves[currentWaveIndex];
             if (wave == null) continue;
 
+            currentWaveTotal = CountWaveEnemies(wave);
+            currentWaveKilled = 0;
+            WaveAnnounceUI.ShowWaveStartGlobal(currentWaveIndex, currentWaveTotal);
+            yield return new WaitForSecondsRealtime(waveIntroTime);
+
+            for (int count = countdownStart; count > 0; count--)
+            {
+                WaveAnnounceUI.ShowCountdownGlobal(count, currentWaveIndex);
+                yield return new WaitForSecondsRealtime(1f);
+            }
+
+            WaveAnnounceUI.ShowWaveProgressGlobal(currentWaveIndex, currentWaveKilled, currentWaveTotal);
             yield return StartCoroutine(CoSpawnWave(wave));
             yield return new WaitUntil(() => aliveEnemies.Count == 0);
             OnWaveCleared?.Invoke(currentWaveIndex);
             WaveAnnounceUI.ShowWaveClearGlobal(currentWaveIndex);
-            yield return new WaitForSeconds(Mathf.Max(1f, wave.nextWaveDelay));
+            yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, waveClearHoldTime));
         }
 
         isRunning = false;
@@ -76,6 +103,7 @@ public class WaveManager : MonoBehaviour
             return;
 
         health.ResetHealth();
+        health.OnDead -= HandleEnemyDead;
         health.OnDead += HandleEnemyDead;
         aliveEnemies.Add(health);
     }
@@ -93,5 +121,70 @@ public class WaveManager : MonoBehaviour
     {
         enemy.OnDead -= HandleEnemyDead;
         aliveEnemies.Remove(enemy);
+        currentWaveKilled = Mathf.Clamp(currentWaveKilled + 1, 0, currentWaveTotal);
+        WaveAnnounceUI.ShowWaveProgressGlobal(currentWaveIndex, currentWaveKilled, currentWaveTotal);
+    }
+
+    private void OnDisable()
+    {
+        StopAndClearWaves(false);
+    }
+
+    // 씬 재시작/타이틀 이동처럼 전투 흐름을 강제로 끊어야 할 때 호출한다.
+    public void StopAndClearWaves(bool despawnAliveEnemies = true)
+    {
+        StopAllCoroutines();
+        isRunning = false;
+        currentWaveIndex = -1;
+
+        if (despawnAliveEnemies)
+            DespawnAliveEnemies();
+
+        ClearAliveEnemySubscriptions();
+    }
+
+    private void DespawnAliveEnemies()
+    {
+        for (int i = aliveEnemies.Count - 1; i >= 0; i--)
+        {
+            Health enemy = aliveEnemies[i];
+            if (enemy == null)
+                continue;
+
+            GameObject enemyObject = enemy.gameObject;
+            if (ObjectPool.Instance != null && enemyObject.GetComponent<PooledObjectTag>() != null)
+                ObjectPool.Instance.Release(enemyObject);
+            else
+                enemyObject.SetActive(false);
+        }
+    }
+
+    private void ClearAliveEnemySubscriptions()
+    {
+        for (int i = aliveEnemies.Count - 1; i >= 0; i--)
+        {
+            if (aliveEnemies[i] != null)
+                aliveEnemies[i].OnDead -= HandleEnemyDead;
+        }
+
+        aliveEnemies.Clear();
+    }
+
+    private int CountWaveEnemies(WaveData wave)
+    {
+        int total = 0;
+        if (wave == null)
+            return total;
+
+        for (int i = 0; i < wave.enemies.Count; i++)
+        {
+            WaveData.SpawnEntry entry = wave.enemies[i];
+            if (entry == null || entry.enemyPrefab == null)
+                continue;
+
+            total += Mathf.Max(0, entry.count);
+        }
+
+        return total;
     }
 }

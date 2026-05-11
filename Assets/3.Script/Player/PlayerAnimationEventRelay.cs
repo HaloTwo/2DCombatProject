@@ -34,6 +34,9 @@ public class PlayerAnimationEventRelay : MonoBehaviour
     public void OpenBasicAttackHitbox()
     {
         BindCombat();
+        if (skillController != null && skillController.IsUsingSkill)
+            return;
+
         combat?.OpenBasicAttackHitbox();
     }
 

@@ -2,45 +2,90 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class WaveAnnounceUI : MonoBehaviour
+public class WaveAnnounceUI : Singleton<WaveAnnounceUI>
 {
-    [SerializeField, KoreanLabel("루트 캔버스 그룹")] private CanvasGroup canvasGroup;
-    [SerializeField, KoreanLabel("메시지 텍스트")] private Text messageText;
-    [SerializeField, KoreanLabel("등장 시간")] private float fadeInTime = 0.12f;
-    [SerializeField, KoreanLabel("유지 시간")] private float holdTime = 0.55f;
-    [SerializeField, KoreanLabel("퇴장 시간")] private float fadeOutTime = 0.25f;
-    [SerializeField, KoreanLabel("등장 스케일")] private float popScale = 1.16f;
+    [Header("Refs")]
+    [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private Text messageText;
+    [SerializeField] private Text subText;
+    [SerializeField] private Text progressText;
 
-    private Coroutine routine;
+    [Header("Style")]
+    [SerializeField] private Vector2 anchoredPosition = new Vector2(0f, -46f);
+    [SerializeField] private Vector2 panelSize = new Vector2(620f, 150f);
+    [SerializeField] private Color mainColor = Color.white;
+    [SerializeField] private Color accentColor = new Color(0.2f, 0.9f, 1f, 1f);
+    [SerializeField] private Color clearColor = new Color(1f, 0.22f, 0.68f, 1f);
+    [SerializeField] private int mainFontSize = 56;
+    [SerializeField] private int subFontSize = 24;
+    [SerializeField] private int progressFontSize = 26;
+    [SerializeField] private float popDuration = 0.14f;
+    [SerializeField] private float popScale = 1.12f;
 
-    public static WaveAnnounceUI Instance { get; private set; }
+    private Coroutine popRoutine;
 
-    private void Awake()
+    protected override void Awake()
     {
-        Instance = this;
-        if (canvasGroup == null)
-            canvasGroup = GetComponent<CanvasGroup>();
+        base.Awake();
+        if (Instance != this)
+            return;
 
-        if (messageText == null)
-            messageText = GetComponentInChildren<Text>();
-
-        SetVisible(0f, Vector3.one);
+        EnsureRefs();
+        SetVisible(false);
     }
 
-    private void OnDestroy()
+    public void ShowWaveStart(int waveIndex, int totalEnemies)
     {
-        if (Instance == this)
-            Instance = null;
+        EnsureRefs();
+        SetVisible(true);
+        SetTexts($"WAVE {waveIndex + 1}", "READY", $"0 / {Mathf.Max(0, totalEnemies)}", mainColor);
+        PlayPop();
+    }
+
+    public void ShowCountdown(int count, int waveIndex)
+    {
+        EnsureRefs();
+        SetVisible(true);
+        SetTexts(count.ToString(), $"WAVE {waveIndex + 1}", string.Empty, accentColor);
+        PlayPop();
+    }
+
+    public void ShowWaveProgress(int waveIndex, int killed, int total)
+    {
+        EnsureRefs();
+        SetVisible(true);
+        SetTexts($"WAVE {waveIndex + 1}", "ENEMIES", $"{Mathf.Max(0, killed)} / {Mathf.Max(0, total)}", accentColor);
     }
 
     public void ShowWaveClear(int waveIndex)
     {
-        Play($"WAVE {waveIndex + 1} CLEAR", false);
+        EnsureRefs();
+        SetVisible(true);
+        SetTexts("WAVE CLEAR!", $"WAVE {waveIndex + 1}", string.Empty, clearColor);
+        PlayPop();
     }
 
     public void ShowGameClear()
     {
-        Play("CLEAR", true);
+        EnsureRefs();
+        SetVisible(true);
+        SetTexts("CLEAR!", "MISSION COMPLETE", string.Empty, clearColor);
+        PlayPop();
+    }
+
+    public static void ShowWaveStartGlobal(int waveIndex, int totalEnemies)
+    {
+        EnsureInstance()?.ShowWaveStart(waveIndex, totalEnemies);
+    }
+
+    public static void ShowCountdownGlobal(int count, int waveIndex)
+    {
+        EnsureInstance()?.ShowCountdown(count, waveIndex);
+    }
+
+    public static void ShowWaveProgressGlobal(int waveIndex, int killed, int total)
+    {
+        EnsureInstance()?.ShowWaveProgress(waveIndex, killed, total);
     }
 
     public static void ShowWaveClearGlobal(int waveIndex)
@@ -57,92 +102,127 @@ public class WaveAnnounceUI : MonoBehaviour
     {
         if (Instance != null)
             return Instance;
+        
+        return FindFirstObjectByType<WaveAnnounceUI>(FindObjectsInactive.Include);
+    }
 
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            GameObject canvasObject = new GameObject("WaveAnnounceCanvas");
-            canvas = canvasObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasObject.AddComponent<CanvasScaler>();
-            canvasObject.AddComponent<GraphicRaycaster>();
-        }
+    private void EnsureRefs()
+    {
+        RectTransform rect = GetComponent<RectTransform>();
+        if (rect == null)
+            rect = gameObject.AddComponent<RectTransform>();
 
-        GameObject root = new GameObject("WaveAnnounceUI");
-        root.transform.SetParent(canvas.transform, false);
+        rect.anchorMin = new Vector2(0.5f, 1f);
+        rect.anchorMax = new Vector2(0.5f, 1f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = panelSize;
 
-        RectTransform rect = root.AddComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        if (canvasGroup == null)
+            canvasGroup = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+
+        Image existingBackground = GetComponent<Image>();
+        if (existingBackground != null)
+            existingBackground.enabled = false;
+
+        if (messageText == null)
+            messageText = CreateText("Message", new Vector2(0f, -42f), new Vector2(panelSize.x - 30f, 64f), mainFontSize, mainColor);
+
+        if (subText == null)
+            subText = CreateText("SubText", new Vector2(0f, -91f), new Vector2(panelSize.x - 30f, 34f), subFontSize, Color.white);
+
+        if (progressText == null)
+            progressText = CreateText("Progress", new Vector2(0f, -122f), new Vector2(panelSize.x - 30f, 34f), progressFontSize, accentColor);
+    }
+
+    private Text CreateText(string objectName, Vector2 position, Vector2 size, int fontSize, Color color)
+    {
+        GameObject textObject = new GameObject(objectName);
+        textObject.transform.SetParent(transform, false);
+
+        RectTransform rect = textObject.AddComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 1f);
+        rect.anchorMax = new Vector2(0.5f, 1f);
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = new Vector2(0f, 120f);
-        rect.sizeDelta = new Vector2(520f, 90f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = size;
 
-        CanvasGroup group = root.AddComponent<CanvasGroup>();
-        Text text = root.AddComponent<Text>();
+        Text text = textObject.AddComponent<Text>();
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         text.alignment = TextAnchor.MiddleCenter;
         text.fontStyle = FontStyle.Bold;
-        text.color = Color.white;
+        text.fontSize = fontSize;
+        text.color = color;
+        text.raycastTarget = false;
 
-        WaveAnnounceUI ui = root.AddComponent<WaveAnnounceUI>();
-        ui.canvasGroup = group;
-        ui.messageText = text;
-        return ui;
+        Outline outline = textObject.AddComponent<Outline>();
+        outline.effectColor = Color.black;
+        outline.effectDistance = new Vector2(3f, -3f);
+
+        Shadow shadow = textObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
+        shadow.effectDistance = new Vector2(2f, -2f);
+        return text;
     }
 
-    private void Play(string message, bool large)
+    private void SetTexts(string main, string sub, string progress, Color mainTextColor)
+    {
+        if (messageText != null)
+        {
+            messageText.text = main;
+            messageText.color = mainTextColor;
+            messageText.fontSize = mainFontSize;
+        }
+
+        if (subText != null)
+        {
+            subText.text = sub;
+            subText.color = Color.white;
+            subText.gameObject.SetActive(!string.IsNullOrEmpty(sub));
+        }
+
+        if (progressText != null)
+        {
+            progressText.text = progress;
+            progressText.color = accentColor;
+            progressText.gameObject.SetActive(!string.IsNullOrEmpty(progress));
+        }
+    }
+
+    private void SetVisible(bool visible)
+    {
+        if (canvasGroup == null)
+            return;
+
+        gameObject.SetActive(true);
+        canvasGroup.alpha = visible ? 1f : 0f;
+        canvasGroup.blocksRaycasts = false;
+        canvasGroup.interactable = false;
+    }
+
+    private void PlayPop()
     {
         if (!isActiveAndEnabled)
             return;
 
-        if (routine != null)
-            StopCoroutine(routine);
+        if (popRoutine != null)
+            StopCoroutine(popRoutine);
 
-        routine = StartCoroutine(CoPlay(message, large));
+        popRoutine = StartCoroutine(CoPop());
     }
 
-    private IEnumerator CoPlay(string message, bool large)
+    private IEnumerator CoPop()
     {
-        if (messageText != null)
-        {
-            messageText.text = message;
-            messageText.fontSize = large ? 56 : 34;
-        }
-
         float time = 0f;
-        while (time < fadeInTime)
+        while (time < popDuration)
         {
             time += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(time / fadeInTime);
-            SetVisible(t, Vector3.Lerp(Vector3.one * popScale, Vector3.one, t));
+            float t = Mathf.Clamp01(time / popDuration);
+            transform.localScale = Vector3.Lerp(Vector3.one * popScale, Vector3.one, t);
             yield return null;
         }
 
-        SetVisible(1f, Vector3.one);
-        yield return new WaitForSecondsRealtime(large ? holdTime * 2f : holdTime);
-
-        time = 0f;
-        while (time < fadeOutTime)
-        {
-            time += Time.unscaledDeltaTime;
-            float t = Mathf.Clamp01(time / fadeOutTime);
-            SetVisible(1f - t, Vector3.one);
-            yield return null;
-        }
-
-        SetVisible(0f, Vector3.one);
-        routine = null;
-    }
-
-    private void SetVisible(float alpha, Vector3 scale)
-    {
-        if (canvasGroup != null)
-        {
-            canvasGroup.alpha = alpha;
-            canvasGroup.blocksRaycasts = false;
-        }
-
-        transform.localScale = scale;
+        transform.localScale = Vector3.one;
+        popRoutine = null;
     }
 }

@@ -1,14 +1,6 @@
 using System.Collections;
 using UnityEngine;
 
-public enum BuffPickupType
-{
-    Heal,
-    FocusCharge,
-    SpeedBoost,
-    Invincible
-}
-
 public class BuffPickup : MonoBehaviour
 {
     [SerializeField, KoreanLabel("버프 타입")] private BuffPickupType buffType = BuffPickupType.Heal;

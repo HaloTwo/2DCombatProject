@@ -34,6 +34,11 @@ public class PlayerSkillController : MonoBehaviour
     [SerializeField, KoreanLabel("슬램 자동 점프 힘")] private float groundSlamJumpPower = 8.5f;
     [SerializeField, KoreanLabel("슬램 낙하 전 대기 시간")] private float groundSlamDiveDelay = 0.16f;
 
+    [SerializeField, KoreanLabel("슬램 착지 후 정지 시간")] private float groundSlamRecoveryLockTime = 1.2f;
+    [SerializeField, KoreanLabel("슬램 이펙트 기준 반경")] private float groundSlamEffectBaseRadius = 2.3f;
+    [SerializeField, KoreanLabel("슬램 범위 기즈모 표시")] private bool showGroundSlamGizmo = true;
+    [SerializeField, KoreanLabel("슬램 범위 기즈모 색상")] private Color groundSlamGizmoColor = new Color(0.25f, 0.75f, 1f, 0.55f);
+
     [Header("Skill Feel")]
     [SerializeField, KoreanLabel("스킬 시전 이동 잠금 여유")] private float skillInputLockPadding = 0.08f;
     [SerializeField, KoreanLabel("투사체 발사 딜레이")] private float projectileStartupDelay = 0.08f;
@@ -55,15 +60,26 @@ public class PlayerSkillController : MonoBehaviour
     [SerializeField, KoreanLabel("공중공격 본인 상승 힘")] private float risingSlashSelfLiftForce = 8.5f;
     [SerializeField, KoreanLabel("공중공격 전진 힘")] private float risingSlashForwardForce = 2.5f;
 
+    [SerializeField, KoreanLabel("공중공격 1타 데미지 배율")] private float risingSlashFirstHitDamageMultiplier = 0.85f;
+    [SerializeField, KoreanLabel("공중공격 2타 데미지 배율")] private float risingSlashSecondHitDamageMultiplier = 1f;
+    [SerializeField, KoreanLabel("공중공격 2타 뒤로 날림 힘")] private float risingSlashSecondHitKnockbackForce = 6.5f;
+    [SerializeField, KoreanLabel("공중공격 2타 위로 뜨는 힘")] private float risingSlashSecondHitUpForce = 1.1f;
+
     private float nextSkillOneTime;
     private float nextSkillTwoTime;
     private bool isUsingSkill;
     private SkillData activeRisingSlashSkill;
     private float activeRisingSlashFacing = 1f;
+    private SkillData lastRisingSlashSkill;
+    private float lastRisingSlashFacing = 1f;
+    private float risingSlashEventValidUntil;
+    private bool risingSlashHit1Triggered;
+    private bool risingSlashHit2Triggered;
 
     public SkillData SkillOne => skillOne;
     public SkillData SkillTwo => skillTwo;
     public SkillData[] AvailableSkills => availableSkills != null && availableSkills.Length > 0 ? availableSkills : new[] { skillOne, skillTwo };
+    public bool IsUsingSkill => isUsingSkill;
 
     private void Reset()
     {
@@ -221,23 +237,6 @@ public class PlayerSkillController : MonoBehaviour
         isUsingSkill = false;
     }
 
-    private IEnumerator CoAreaAttack(SkillData skill)
-    {
-        isUsingSkill = true;
-        float facing = GetFacing();
-        movement?.LockMovementFor(skill.duration + skillInputLockPadding);
-        PlaySkillShake(skillShakeDuration, skillShakePower);
-        SpawnEffect(slashEffectPrefab, transform.position + new Vector3(facing * 0.65f, 0.05f, 0f), new Vector3(facing, 1.35f, 1f));
-
-        if (skillHitbox != null && skill.attackData != null)
-            skillHitbox.Open(Team.Player, skill.attackData);
-
-        yield return new WaitForSeconds(skill.duration);
-
-        skillHitbox?.Close();
-        isUsingSkill = false;
-    }
-
     // 앞쪽 판정과 상승 이동을 같이 주는 띄우기 계열 스킬이다.
     private IEnumerator CoRisingSlash(SkillData skill)
     {
@@ -245,6 +244,11 @@ public class PlayerSkillController : MonoBehaviour
         float facing = GetFacing();
         activeRisingSlashSkill = skill;
         activeRisingSlashFacing = facing;
+        lastRisingSlashSkill = skill;
+        lastRisingSlashFacing = facing;
+        risingSlashEventValidUntil = Time.time + Mathf.Max(1.2f, skill.duration + 0.8f);
+        risingSlashHit1Triggered = false;
+        risingSlashHit2Triggered = false;
         movement?.LockMovementFor(skill.duration + skillInputLockPadding);
         PlaySkillShake(skillShakeDuration, skillShakePower);
         SpawnEffect(risingEffectPrefab, transform.position + new Vector3(facing * 0.55f, 0.4f, 0f), new Vector3(facing, 1f, 1f));
@@ -252,7 +256,15 @@ public class PlayerSkillController : MonoBehaviour
         if (rb != null)
             rb.linearVelocity = new Vector2(facing * risingSlashForwardForce, risingSlashSelfLiftForce);
 
-        yield return new WaitForSeconds(skill.duration);
+        yield return new WaitForSeconds(0.08f);
+        if (!risingSlashHit1Triggered)
+            TryApplyRisingSlashHit(risingSlashFirstHitDamageMultiplier, true);
+
+        yield return new WaitForSeconds(0.14f);
+        if (!risingSlashHit2Triggered)
+            TryApplyRisingSlashHit(risingSlashSecondHitDamageMultiplier, false);
+
+        yield return new WaitForSeconds(Mathf.Max(0f, skill.duration - 0.22f));
 
         activeRisingSlashSkill = null;
         isUsingSkill = false;
@@ -274,15 +286,25 @@ public class PlayerSkillController : MonoBehaviour
         float waitEndTime = Time.time + Mathf.Max(0.05f, groundSlamMaxFallWait);
         yield return new WaitUntil(() => Time.time >= waitEndTime || movement == null || (movement.IsGrounded && (rb == null || rb.linearVelocity.y <= 0.01f)));
 
-        Vector3 slamCenter = transform.position + new Vector3(0f, -0.45f, 0f);
-        SpawnEffect(slamEffectPrefab, slamCenter, Vector3.one);
+        Vector3 slamCenter = GetGroundSlamCenter();
+        Vector3 slamEffectScale = Vector3.one * Mathf.Max(0.1f, groundSlamRadius / Mathf.Max(0.1f, groundSlamEffectBaseRadius));
+        movement?.LockMovementFor(groundSlamRecoveryLockTime);
+        movement?.StopAttackStep();
+        if (rb != null)
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+
+        SpawnEffect(slamEffectPrefab, slamCenter, slamEffectScale);
         SpawnEffect(slamDustPrefab, slamCenter, Vector3.one);
         ApplyGroundSlamArea(skill, slamCenter);
 
         PlaySkillShake(groundSlamShakeDuration, groundSlamShakePower);
         GlobalHitStop.Play(groundSlamHitStop);
 
-        yield return new WaitForSeconds(skill.duration * 0.55f);
+        yield return new WaitForSeconds(Mathf.Max(skill.duration * 0.55f, groundSlamRecoveryLockTime));
+
+        movement?.StopAttackStep();
+        if (rb != null)
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
 
         isUsingSkill = false;
     }
@@ -290,13 +312,13 @@ public class PlayerSkillController : MonoBehaviour
     // Attack4 애니메이션 첫 번째 베기 프레임에서 호출한다. 적을 먼저 띄우는 약한 타격이다.
     public void RisingSlashHit1()
     {
-        ApplyRisingSlashArea(activeRisingSlashSkill, activeRisingSlashFacing, 0.85f);
+        TryApplyRisingSlashHit(risingSlashFirstHitDamageMultiplier, true);
     }
 
     // Attack4 애니메이션 두 번째 베기 프레임에서 호출한다. 같은 범위를 다시 긁어서 2타 데미지를 준다.
     public void RisingSlashHit2()
     {
-        ApplyRisingSlashArea(activeRisingSlashSkill, activeRisingSlashFacing, 1f);
+        TryApplyRisingSlashHit(risingSlashSecondHitDamageMultiplier, false);
     }
 
     public void SkillHit1()
@@ -307,6 +329,29 @@ public class PlayerSkillController : MonoBehaviour
     public void SkillHit2()
     {
         RisingSlashHit2();
+    }
+
+    // Attack4 애니메이션 이벤트가 SkillData.duration보다 늦게 호출돼도 마지막 공중공격 정보를 짧게 유지해서 데미지를 넣는다.
+    private void TryApplyRisingSlashHit(float damageMultiplier, bool firstHit)
+    {
+        SkillData skill = activeRisingSlashSkill;
+        float facing = activeRisingSlashFacing;
+
+        if (skill == null && Time.time <= risingSlashEventValidUntil)
+        {
+            skill = lastRisingSlashSkill;
+            facing = lastRisingSlashFacing;
+        }
+
+        if (skill == null)
+            return;
+
+        if (firstHit)
+            risingSlashHit1Triggered = true;
+        else
+            risingSlashHit2Triggered = true;
+
+        ApplyRisingSlashArea(skill, facing, damageMultiplier, firstHit);
     }
 
     private void ApplyGroundSlamArea(SkillData skill, Vector2 center)
@@ -340,7 +385,7 @@ public class PlayerSkillController : MonoBehaviour
     }
 
     // 라이징 슬래시는 애니메이션 중 한 번만 전방 위쪽 영역을 긁고, 맞은 적과 플레이어를 함께 띄운다.
-    private void ApplyRisingSlashArea(SkillData skill, float facing, float damageMultiplier)
+    private void ApplyRisingSlashArea(SkillData skill, float facing, float damageMultiplier, bool firstHit)
     {
         if (skill == null || skill.attackData == null)
             return;
@@ -361,7 +406,9 @@ public class PlayerSkillController : MonoBehaviour
                 continue;
 
             Vector2 hitPoint = hit.ClosestPoint(center);
-            Vector2 knockback = new Vector2(Mathf.Abs(skill.attackData.knockback.x) * 0.35f * facing, risingSlashEnemyLiftForce);
+            Vector2 knockback = firstHit
+                ? new Vector2(Mathf.Abs(skill.attackData.knockback.x) * 0.35f * facing, risingSlashEnemyLiftForce)
+                : new Vector2(risingSlashSecondHitKnockbackForce * facing, risingSlashSecondHitUpForce);
             float damage = PlayerDamageBuff.ModifyPlayerDamage(skill.attackData.damage * damageMultiplier);
             DamageInfo info = new DamageInfo(Team.Player, damage, hitPoint, knockback, skill.attackData.hitStopTime);
 
@@ -373,7 +420,10 @@ public class PlayerSkillController : MonoBehaviour
             SpawnHitFlash(hitPoint);
 
             if (targetHealth.TryGetComponent(out EnemyBrainBase enemyBrain))
-                enemyBrain.ApplyFocusBurstKnockback(new Vector2(facing, 1f), Mathf.Abs(knockback.x), risingSlashEnemyLiftForce, 0.16f);
+            {
+                Vector2 launchDirection = firstHit ? new Vector2(facing, 1f) : Vector2.right * facing;
+                enemyBrain.ApplyFocusBurstKnockback(launchDirection, Mathf.Abs(knockback.x), knockback.y, 0.16f);
+            }
         }
 
         if (!hitAny)
@@ -430,24 +480,6 @@ public class PlayerSkillController : MonoBehaviour
     }
 
     // 뒤로 빠지면서 검기를 쏘는 원거리 리듬용 스킬이다.
-    private IEnumerator CoBackStepShot(SkillData skill)
-    {
-        isUsingSkill = true;
-        float facing = GetFacing();
-        movement?.LockMovementFor(skill.duration + skillInputLockPadding);
-        PlaySkillShake(skillShakeDuration, skillShakePower);
-
-        if (rb != null)
-            rb.linearVelocity = new Vector2(-facing * Mathf.Abs(skill.force), rb.linearVelocity.y);
-
-        yield return new WaitForSeconds(projectileStartupDelay);
-        FireProjectile(skill);
-        SpawnEffect(slashEffectPrefab, transform.position + new Vector3(facing * 0.55f, 0.2f, 0f), new Vector3(facing, 1f, 1f));
-        yield return new WaitForSeconds(skill.duration);
-
-        isUsingSkill = false;
-    }
-
     // 검기 계열은 버튼 즉시 발사가 아니라 짧은 스타트업 후 발사해서 모션과 타이밍을 맞춘다.
     private IEnumerator CoProjectileSlash(SkillData skill)
     {
@@ -530,5 +562,19 @@ public class PlayerSkillController : MonoBehaviour
         };
 
         SoundManager.Instance.PlaySFX(sfxType);
+    }
+
+    private Vector3 GetGroundSlamCenter()
+    {
+        return transform.position + new Vector3(0f, -0.45f, 0f);
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (!showGroundSlamGizmo || groundSlamRadius <= 0f)
+            return;
+
+        Gizmos.color = groundSlamGizmoColor;
+        Gizmos.DrawWireSphere(GetGroundSlamCenter(), groundSlamRadius);
     }
 }

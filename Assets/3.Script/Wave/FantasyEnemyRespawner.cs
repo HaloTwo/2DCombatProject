@@ -73,6 +73,19 @@ public class FantasyEnemyRespawner : MonoBehaviour
         aliveEnemies.Remove(enemy);
     }
 
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+
+        for (int i = aliveEnemies.Count - 1; i >= 0; i--)
+        {
+            if (aliveEnemies[i] != null)
+                aliveEnemies[i].OnDead -= HandleEnemyDead;
+        }
+
+        aliveEnemies.Clear();
+    }
+
     private void CleanupDeadReferences()
     {
         for (int i = aliveEnemies.Count - 1; i >= 0; i--)

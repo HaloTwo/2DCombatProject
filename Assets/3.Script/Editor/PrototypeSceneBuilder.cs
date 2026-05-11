@@ -618,7 +618,6 @@ public static class PrototypeSceneBuilder
         healthSo.ApplyModifiedPropertiesWithoutUndo();
 
         root.AddComponent<Hurtbox>();
-        root.AddComponent<EnemyContactDamage>();
         root.AddComponent<ListRendererCache>();
         root.AddComponent<CombatFeedback>();
         return root;

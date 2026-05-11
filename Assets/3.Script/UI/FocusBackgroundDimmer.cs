@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class FocusBackgroundDimmer : MonoBehaviour
+public class FocusBackgroundDimmer : Singleton<FocusBackgroundDimmer>
 {
     [SerializeField, KoreanLabel("어둡게 만들 루트들")] private Transform[] targetRoots;
     [SerializeField, KoreanLabel("어두워진 색상 배율")] private Color dimMultiplier = new Color(0.18f, 0.18f, 0.22f, 1f);
@@ -9,11 +9,12 @@ public class FocusBackgroundDimmer : MonoBehaviour
     private Color[] originColors;
     private bool dimmed;
 
-    public static FocusBackgroundDimmer Instance { get; private set; }
-
-    private void Awake()
+    protected override void Awake()
     {
-        Instance = this;
+        base.Awake();
+        if (Instance != this)
+            return;
+
         CacheRenderers();
     }
 
@@ -97,11 +98,9 @@ public class FocusBackgroundDimmer : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         Hide();
-
-        if (Instance == this)
-            Instance = null;
+        base.OnDestroy();
     }
 }

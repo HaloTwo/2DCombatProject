@@ -15,7 +15,7 @@ public class CombatFeedback : MonoBehaviour
 
     [Header("Damage Text")]
     [SerializeField] private bool spawnDamageText;
-    [SerializeField] private Color damageTextColor = Color.white;
+    [SerializeField] private Color damageTextColor = new Color(0.88f, 0.98f, 1f, 1f);
     [SerializeField] private Vector3 damageTextOffset = new Vector3(0f, 0.45f, 0f);
 
     private void Reset()
@@ -82,13 +82,19 @@ public class CombatFeedback : MonoBehaviour
         text.fontSize = 36;
         text.anchor = TextAnchor.MiddleCenter;
         text.alignment = TextAlignment.Center;
-        text.color = damageTextColor;
+        text.color = GetReadableDamageTextColor();
         text.characterSize = 0.08f;
 
         MeshRenderer renderer = go.GetComponent<MeshRenderer>();
         renderer.sortingOrder = 80;
 
         go.AddComponent<WorldDamageText>();
+    }
+
+    private Color GetReadableDamageTextColor()
+    {
+        bool looksYellow = damageTextColor.r > 0.85f && damageTextColor.g > 0.65f && damageTextColor.b < 0.35f;
+        return looksYellow ? new Color(0.88f, 0.98f, 1f, 1f) : damageTextColor;
     }
 }
 

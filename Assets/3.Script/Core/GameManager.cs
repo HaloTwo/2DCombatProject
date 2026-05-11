@@ -13,6 +13,7 @@ public class GameManager : Singleton<GameManager>
 
     public GameState State => state;
     public bool CanShowGameOverMenu { get; private set; }
+    public bool IsPaused => state == GameState.Paused;
 
     public void StartGame()
     {
@@ -26,7 +27,26 @@ public class GameManager : Singleton<GameManager>
         if (state == GameState.Clear) return;
         state = GameState.Clear;
         WaveAnnounceUI.ShowGameClearGlobal();
+        Time.timeScale = 0f;
         Debug.Log("[GameManager] Game Clear");
+    }
+
+    public void PauseGame()
+    {
+        if (state != GameState.Playing)
+            return;
+
+        state = GameState.Paused;
+        Time.timeScale = 0f;
+    }
+
+    public void ResumeGame()
+    {
+        if (state != GameState.Paused)
+            return;
+
+        state = GameState.Playing;
+        Time.timeScale = 1f;
     }
 
     public void GameOver()

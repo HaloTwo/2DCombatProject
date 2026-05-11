@@ -20,6 +20,7 @@ public class ObjectPool : Singleton<ObjectPool>
     [SerializeField] private List<PoolEntry> initialPools = new();
 
     private readonly Dictionary<GameObject, Pool> pools = new();
+    private readonly HashSet<GameObject> activeObjects = new();
 
     protected override void Awake()
     {
@@ -61,6 +62,7 @@ public class ObjectPool : Singleton<ObjectPool>
         go.transform.SetParent(null);
         go.transform.SetPositionAndRotation(position, rotation);
         go.SetActive(true);
+        activeObjects.Add(go);
         go.GetComponent<IPoolable>()?.OnSpawned();
         return go;
     }
@@ -72,14 +74,34 @@ public class ObjectPool : Singleton<ObjectPool>
         PooledObjectTag tag = go.GetComponent<PooledObjectTag>();
         if (tag == null || tag.OriginPrefab == null || !pools.TryGetValue(tag.OriginPrefab, out Pool pool))
         {
+            activeObjects.Remove(go);
             Destroy(go);
             return;
         }
 
+        activeObjects.Remove(go);
         go.GetComponent<IPoolable>()?.OnDespawned();
         go.SetActive(false);
         go.transform.SetParent(pool.root);
         pool.inactive.Enqueue(go);
+    }
+
+    // 씬을 다시 시작하거나 타이틀로 돌아갈 때, 풀에서 꺼낸 적/투사체/이펙트를 모두 회수한다.
+    public void ReleaseAllActive()
+    {
+        if (activeObjects.Count == 0)
+            return;
+
+        GameObject[] spawnedObjects = new GameObject[activeObjects.Count];
+        activeObjects.CopyTo(spawnedObjects);
+
+        for (int i = 0; i < spawnedObjects.Length; i++)
+        {
+            if (spawnedObjects[i] != null)
+                Release(spawnedObjects[i]);
+        }
+
+        activeObjects.Clear();
     }
 
     private Pool GetOrCreatePool(GameObject prefab)

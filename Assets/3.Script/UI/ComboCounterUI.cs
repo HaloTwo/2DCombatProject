@@ -2,22 +2,28 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ComboCounterUI : MonoBehaviour
+public class ComboCounterUI : Singleton<ComboCounterUI>
 {
     [SerializeField] private Text comboText;
+    [SerializeField] private Image backgroundImage;
     [SerializeField] private float resetDelay = 1.2f;
     [SerializeField] private float popDuration = 0.12f;
     [SerializeField] private float popScale = 1.18f;
+    [SerializeField] private Vector2 anchoredPosition = new Vector2(0f, -145f);
+    [SerializeField] private Vector2 panelSize = new Vector2(330f, 74f);
+    [SerializeField] private Color textColor = Color.white;
 
     private int comboCount;
     private float lastComboTime = -999f;
     private Coroutine popRoutine;
 
-    public static ComboCounterUI Instance { get; private set; }
-
-    private void Awake()
+    protected override void Awake()
     {
-        Instance = this;
+        base.Awake();
+        if (Instance != this)
+            return;
+
+        EnsureReadableStyle();
         Refresh();
     }
 
@@ -31,12 +37,6 @@ public class ComboCounterUI : MonoBehaviour
     {
         Hitbox.OnAnyHit -= HandleAnyHit;
         Health.OnAnyDead -= HandleAnyDead;
-    }
-
-    private void OnDestroy()
-    {
-        if (Instance == this)
-            Instance = null;
     }
 
     private void Update()
@@ -90,15 +90,13 @@ public class ComboCounterUI : MonoBehaviour
 
         bool visible = comboCount > 0;
         comboText.gameObject.SetActive(visible);
+        if (backgroundImage != null)
+            backgroundImage.gameObject.SetActive(false);
+
         if (!visible)
             return;
 
-        if (comboCount >= 10)
-            comboText.text = $"COMBO x{comboCount}";
-        else if (comboCount >= 3)
-            comboText.text = $"x{comboCount} COMBO";
-        else
-            comboText.text = $"{comboCount} HIT";
+        comboText.text = $"HIT x{comboCount}";
     }
 
     private void PlayPop()
@@ -135,5 +133,49 @@ public class ComboCounterUI : MonoBehaviour
 
         target.localScale = Vector3.one;
         popRoutine = null;
+    }
+
+    private void EnsureReadableStyle()
+    {
+        if (comboText == null)
+            comboText = GetComponentInChildren<Text>(true);
+
+        RectTransform rect = GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = panelSize;
+        }
+
+        if (backgroundImage != null)
+        {
+            backgroundImage.enabled = false;
+            backgroundImage.raycastTarget = false;
+        }
+
+        if (comboText == null)
+            return;
+
+        comboText.fontSize = Mathf.Max(comboText.fontSize, 42);
+        comboText.fontStyle = FontStyle.Bold;
+        comboText.alignment = TextAnchor.MiddleCenter;
+        comboText.color = textColor;
+
+        Outline outline = comboText.GetComponent<Outline>();
+        if (outline == null)
+            outline = comboText.gameObject.AddComponent<Outline>();
+
+        outline.effectColor = Color.black;
+        outline.effectDistance = new Vector2(3f, -3f);
+
+        Shadow shadow = comboText.GetComponent<Shadow>();
+        if (shadow == null)
+            shadow = comboText.gameObject.AddComponent<Shadow>();
+
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
+        shadow.effectDistance = new Vector2(2f, -2f);
     }
 }

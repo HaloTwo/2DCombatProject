@@ -403,8 +403,8 @@ MonoBehaviour:
   risingEffectPrefab: {fileID: 701568740615211414, guid: 10de8cf96ea31d1428d784d64b935a63, type: 3}
   slamEffectPrefab: {fileID: 2113935620815546934, guid: 437b21ca2f5182049bd524f9c94fdae7, type: 3}
   slamDustPrefab: {fileID: 0}
-  hitFlashEffectPrefab: {fileID: 8690950337773083281, guid: 803b96fa8ebd5a749bdf32bd0e553139, type: 3}
-  groundSlamRadius: 2.3
+  hitFlashEffectPrefab: {fileID: 8690950337773083281, guid: 35cd0cf6ccb95bf409e9287153930e5b, type: 3}
+  groundSlamRadius: 1.7
   groundSlamKnockbackForce: 8.5
   groundSlamKnockbackUpForce: 2.2
   groundSlamShakeDuration: 0.12
@@ -413,6 +413,10 @@ MonoBehaviour:
   groundSlamMaxFallWait: 0.65
   groundSlamJumpPower: 8.5
   groundSlamDiveDelay: 0.16
+  groundSlamRecoveryLockTime: 1.2
+  groundSlamEffectBaseRadius: 2.3
+  showGroundSlamGizmo: 1
+  groundSlamGizmoColor: {r: 0.25, g: 0.75, b: 1, a: 0.55}
   skillInputLockPadding: 0.15
   projectileStartupDelay: 0.08
   skillShakeDuration: 0.1

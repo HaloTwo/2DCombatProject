@@ -258,7 +258,6 @@ GameObject:
   - component: {fileID: 1418244584591738810}
   - component: {fileID: 119711015400734301}
   - component: {fileID: 2526452058430331534}
-  - component: {fileID: 8856410798955524898}
   - component: {fileID: 2868096506443419553}
   - component: {fileID: 8457075870101977789}
   - component: {fileID: 596257795951589280}
@@ -389,24 +388,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
   health: {fileID: 119711015400734301}
   guard: {fileID: 0}
---- !u!114 &8856410798955524898
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7439954532678875669}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ff84edfd13826a443a9fa1302b9f6695, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyContactDamage
-  damage: 5
-  knockback: {x: 4, y: 2}
-  disableContactKnockback: 1
-  hitStopTime: 0.03
-  damageCooldown: 0.65
-  contactArea: {fileID: 0}
 --- !u!114 &2868096506443419553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -439,7 +420,6 @@ MonoBehaviour:
   knockbackMultiplier: 0.1
   maxKnockbackX: 1.2
   maxKnockbackY: 0.7
-  flashTime: 0.08
   spawnDamageText: 1
   damageTextColor: {r: 1, g: 0.92, b: 0.35, a: 1}
   damageTextOffset: {x: 0, y: 0.45, z: 0}
@@ -611,6 +591,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimationEventRelay
   meleeEnemy: {fileID: 596257795951589280}
   flyingEnemy: {fileID: 0}
+  rangedEnemy: {fileID: 0}
 --- !u!1 &8847624367841813958
 GameObject:
   m_ObjectHideFlags: 0
@@ -732,3 +713,5 @@ MonoBehaviour:
   fillImage: {fileID: 3380857818632909714}
   backImage: {fileID: 5868997350230138169}
   hideOnDead: 1
+  keepWorldRotation: 1
+  counterParentFlip: 1

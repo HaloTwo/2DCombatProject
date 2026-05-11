@@ -2,26 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerDamageBuff : MonoBehaviour
+public class PlayerDamageBuff : Singleton<PlayerDamageBuff>
 {
     [SerializeField, KoreanLabel("기본 데미지 배율")] private float baseMultiplier = 1f;
 
     private readonly List<DamageBuffEntry> activeBuffs = new();
     private Coroutine buffRoutine;
 
-    public static PlayerDamageBuff Instance { get; private set; }
     public float CurrentMultiplier { get; private set; } = 1f;
 
-    private void Awake()
+    protected override void Awake()
     {
-        Instance = this;
-        CurrentMultiplier = Mathf.Max(0.1f, baseMultiplier);
-    }
+        base.Awake();
+        if (Instance != this)
+            return;
 
-    private void OnDestroy()
-    {
-        if (Instance == this)
-            Instance = null;
+        CurrentMultiplier = Mathf.Max(0.1f, baseMultiplier);
     }
 
     // Power Orb에서 호출한다. 각 공격력 버프는 독립 지속 시간을 갖고, 살아있는 버프 중 가장 높은 배율을 적용한다.

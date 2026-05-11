@@ -19,5 +19,5 @@ MonoBehaviour:
   cooldown: 2.2
   duration: 0.24
   range: 2
-  force: 15
+  force: 5
   projectilePrefab: {fileID: 4837269703097687841, guid: 307eb24a2a9402a41b96410189d5716a, type: 3}

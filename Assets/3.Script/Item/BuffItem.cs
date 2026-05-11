@@ -1,13 +1,5 @@
 using UnityEngine;
 
-public enum BuffItemType
-{
-    MoveSpeed,
-    AttackPower,
-    FocusGauge,
-    Invincible
-}
-
 public class BuffItem : MonoBehaviour
 {
     [SerializeField, KoreanLabel("버프 종류")] private BuffItemType buffType = BuffItemType.MoveSpeed;

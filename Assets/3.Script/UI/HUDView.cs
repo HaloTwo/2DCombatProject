@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class HUDView : MonoBehaviour
+public class HUDView : Singleton<HUDView>
 {
     [Header("포커스 발동 연출")]
     [SerializeField, KoreanLabel("플레이어 발동 연출")] private PlayerFocusBurst playerFocusBurst;
@@ -49,11 +49,9 @@ public class HUDView : MonoBehaviour
     private bool isFocusIntroPlaying;
 
     private bool IsFocusFull => currentFocusGauge >= maxFocusGauge;
-    public static HUDView Instance { get; private set; }
-
-    private void Awake()
+    protected override void Awake()
     {
-        Instance = this;
+        base.Awake();
     }
 
     private void Reset()
@@ -75,9 +73,6 @@ public class HUDView : MonoBehaviour
 
     private void OnDisable()
     {
-        if (Instance == this)
-            Instance = null;
-
         UnsubscribePlayerHealth();
         StopFocusIntro();
 

@@ -1,26 +1,21 @@
 using System.Collections;
 using UnityEngine;
 
-public class CameraShake : MonoBehaviour
+public class CameraShake : Singleton<CameraShake>
 {
-    public static CameraShake Instance { get; private set; }
-
     [SerializeField] private float defaultDuration = 0.08f;
     [SerializeField] private float defaultStrength = 0.08f;
 
     private Vector3 originLocalPosition;
     private Coroutine shakeRoutine;
 
-    private void Awake()
+    protected override void Awake()
     {
-        Instance = this;
-        originLocalPosition = transform.localPosition;
-    }
+        base.Awake();
+        if (Instance != this)
+            return;
 
-    private void OnDestroy()
-    {
-        if (Instance == this)
-            Instance = null;
+        originLocalPosition = transform.localPosition;
     }
 
     public void Shake()

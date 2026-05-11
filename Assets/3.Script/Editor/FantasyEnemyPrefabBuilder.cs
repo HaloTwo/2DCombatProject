@@ -121,10 +121,6 @@ public static class FantasyEnemyPrefabBuilder
         healthSo.ApplyModifiedPropertiesWithoutUndo();
 
         root.AddComponent<Hurtbox>();
-        EnemyContactDamage contactDamage = root.AddComponent<EnemyContactDamage>();
-        SerializedObject contactSo = new SerializedObject(contactDamage);
-        contactSo.FindProperty("damage").floatValue = spriteFolder == "Skeleton" ? 8f : 5f;
-        contactSo.ApplyModifiedPropertiesWithoutUndo();
         root.AddComponent<ListRendererCache>();
 
         CombatFeedback feedback = root.AddComponent<CombatFeedback>();
