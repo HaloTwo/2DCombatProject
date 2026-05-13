@@ -33,8 +33,7 @@ Unity 기반 PC/Steam 대응 2D 플랫포머 액션 전투 프로토타입입니
 | 스킬 1 | A | Left Shoulder |
 | 스킬 2 | S | Right Shoulder |
 | 가드/패링 | X | Left Trigger |
-| 상호작용 | 방향키 위 또는 E | North Button |
-| 포커스 모드 | Focus 입력 액션 | Focus 입력 액션 |
+| 포커스 모드 | V | Focus 입력 액션 |
 | 일시정지 | Esc | Start |
 
 스킬 슬롯은 마우스로 클릭해 스킬 목록을 열 수 있고, 드래그로 슬롯 위치를 교체할 수 있습니다.
