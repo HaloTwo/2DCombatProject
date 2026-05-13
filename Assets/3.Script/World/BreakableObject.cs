@@ -11,7 +11,13 @@ public class BreakableObject : MonoBehaviour
     [SerializeField, KoreanLabel("약한 카메라 흔들림")] private bool shakeCamera = true;
     [SerializeField, KoreanLabel("파괴 후 비활성화")] private bool deactivateOnBreak = true;
 
+    [Header("리스폰 중복 방지")]
+    [SerializeField, KoreanLabel("주변 검사 반경")] private float respawnBlockRadius = 0.65f;
+    [SerializeField, KoreanLabel("아이템이 있으면 리스폰 안함")] private bool blockRespawnWhenItemExists = true;
+    [SerializeField, KoreanLabel("다른 박스가 있으면 리스폰 안함")] private bool blockRespawnWhenOtherBoxExists = true;
+
     private bool broken;
+    private Vector3 spawnPosition;
 
     private void Reset()
     {
@@ -22,14 +28,23 @@ public class BreakableObject : MonoBehaviour
     {
         if (health == null)
             health = GetComponent<Health>();
+
+        spawnPosition = transform.position;
     }
 
     private void OnEnable()
     {
         broken = false;
+
+        if (health == null)
+            health = GetComponent<Health>();
+
         health?.ResetHealth();
+
         if (health != null)
         {
+            health.OnDamaged -= HandleDamaged;
+            health.OnDead -= HandleDead;
             health.OnDamaged += HandleDamaged;
             health.OnDead += HandleDead;
         }
@@ -97,14 +112,71 @@ public class BreakableObject : MonoBehaviour
         return go;
     }
 
-    // 웨이브/스테이지가 바뀔 때 박스만 다시 살린다. 드랍/이펙트는 건드리지 않고 원래 오브젝트만 초기화한다.
+    // 웨이브/스테이지가 바뀔 때 박스만 다시 살린다.
+    // 단, 기존 아이템이나 다른 박스가 이미 있으면 겹침 방지를 위해 리스폰하지 않는다.
     public void Respawn()
     {
+        if (gameObject.activeSelf)
+            return;
+
+        if (IsRespawnBlocked())
+            return;
+
         broken = false;
+        transform.position = spawnPosition;
         gameObject.SetActive(true);
+
         if (health == null)
             health = GetComponent<Health>();
 
         health?.ResetHealth();
     }
+
+    private bool IsRespawnBlocked()
+    {
+        if (respawnBlockRadius <= 0f)
+            return false;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(spawnPosition, respawnBlockRadius);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+
+            if (hit == null)
+                continue;
+
+            if (!hit.gameObject.activeInHierarchy)
+                continue;
+
+            if (hit.transform.IsChildOf(transform))
+                continue;
+
+            if (blockRespawnWhenItemExists && hit.GetComponentInParent<BuffItem>() != null)
+                return true;
+
+            if (blockRespawnWhenOtherBoxExists)
+            {
+                BreakableObject otherBox = hit.GetComponentInParent<BreakableObject>();
+
+                if (otherBox != null && otherBox != this && otherBox.gameObject.activeInHierarchy)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        Vector3 center = Application.isPlaying ? spawnPosition : transform.position;
+
+        Gizmos.color = new Color(1f, 0.75f, 0.1f, 0.35f);
+        Gizmos.DrawSphere(center, respawnBlockRadius);
+
+        Gizmos.color = new Color(1f, 0.75f, 0.1f, 0.9f);
+        Gizmos.DrawWireSphere(center, respawnBlockRadius);
+    }
+#endif
 }

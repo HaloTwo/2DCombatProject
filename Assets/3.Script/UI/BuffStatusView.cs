@@ -13,6 +13,7 @@ public class BuffStatusView : MonoBehaviour
 
     private readonly List<BuffStatusSlotUI> activeSlots = new();
     private readonly Queue<BuffStatusSlotUI> pooledSlots = new();
+
     private static BuffStatusView instance;
     private static Sprite circleSprite;
 
@@ -34,7 +35,14 @@ public class BuffStatusView : MonoBehaviour
         for (int i = activeSlots.Count - 1; i >= 0; i--)
         {
             BuffStatusSlotUI slot = activeSlots[i];
-            if (slot == null || slot.UpdateView())
+
+            if (slot == null)
+            {
+                activeSlots.RemoveAt(i);
+                continue;
+            }
+
+            if (slot.UpdateView())
                 continue;
 
             activeSlots.RemoveAt(i);
@@ -51,7 +59,21 @@ public class BuffStatusView : MonoBehaviour
     {
         EnsureListRoot();
 
-        // 같은 버프를 여러 번 먹어도 슬롯을 합치지 않고, 각 슬롯이 자기 지속 시간으로 따로 돈다.
+        if (duration <= 0f)
+            return;
+
+        BuffStatusSlotUI existingSlot = FindActiveSlot(type);
+
+        if (existingSlot != null)
+        {
+            // 같은 버프를 다시 획득하면 새 슬롯을 만들지 않고 기존 슬롯의 시간을 연장한다.
+            existingSlot.ExtendDuration(duration);
+            StartCoroutine(CoPop(existingSlot.transform));
+            LayoutRebuilder.ForceRebuildLayoutImmediate(listRoot);
+            return;
+        }
+
+        // 다른 종류의 버프는 새 슬롯을 만든다.
         BuffStatusSlotUI slot = GetSlot();
         slot.transform.SetParent(listRoot, false);
         slot.Initialize(type, duration, slotSize, GetCircleSprite(), GetBuffColor(type));
@@ -61,9 +83,29 @@ public class BuffStatusView : MonoBehaviour
         LayoutRebuilder.ForceRebuildLayoutImmediate(listRoot);
     }
 
+    private BuffStatusSlotUI FindActiveSlot(BuffItemType type)
+    {
+        for (int i = 0; i < activeSlots.Count; i++)
+        {
+            BuffStatusSlotUI slot = activeSlots[i];
+
+            if (slot == null)
+                continue;
+
+            if (!slot.gameObject.activeSelf)
+                continue;
+
+            if (slot.Type == type)
+                return slot;
+        }
+
+        return null;
+    }
+
     private void Prewarm()
     {
         int count = Mathf.Max(0, prewarmCount);
+
         for (int i = 0; i < count; i++)
             ReleaseSlot(CreateSlot());
     }
@@ -73,6 +115,7 @@ public class BuffStatusView : MonoBehaviour
         while (pooledSlots.Count > 0)
         {
             BuffStatusSlotUI slot = pooledSlots.Dequeue();
+
             if (slot != null)
                 return slot;
         }
@@ -83,6 +126,7 @@ public class BuffStatusView : MonoBehaviour
     private BuffStatusSlotUI CreateSlot()
     {
         BuffStatusSlotUI slot;
+
         if (slotPrefab != null)
         {
             slot = Instantiate(slotPrefab, listRoot);
@@ -108,6 +152,7 @@ public class BuffStatusView : MonoBehaviour
         slot.gameObject.SetActive(false);
         slot.transform.SetParent(listRoot, false);
         pooledSlots.Enqueue(slot);
+
         LayoutRebuilder.ForceRebuildLayoutImmediate(listRoot);
     }
 
@@ -115,6 +160,7 @@ public class BuffStatusView : MonoBehaviour
     {
         if (listRoot == null)
             listRoot = GetComponent<RectTransform>();
+
         if (listRoot == null)
             listRoot = gameObject.AddComponent<RectTransform>();
 
@@ -125,6 +171,7 @@ public class BuffStatusView : MonoBehaviour
     private void ConfigureLayout(GameObject target)
     {
         HorizontalLayoutGroup layout = target.GetComponent<HorizontalLayoutGroup>();
+
         if (layout == null)
             layout = target.AddComponent<HorizontalLayoutGroup>();
 
@@ -137,6 +184,7 @@ public class BuffStatusView : MonoBehaviour
         layout.childForceExpandHeight = false;
 
         ContentSizeFitter fitter = target.GetComponent<ContentSizeFitter>();
+
         if (fitter == null)
             fitter = target.AddComponent<ContentSizeFitter>();
 
@@ -150,6 +198,7 @@ public class BuffStatusView : MonoBehaviour
             yield break;
 
         target.localScale = Vector3.one * 1.16f;
+
         yield return new WaitForSecondsRealtime(0.08f);
 
         if (target != null)
@@ -162,10 +211,12 @@ public class BuffStatusView : MonoBehaviour
             return instance;
 
         Transform parent = FindCombatHud();
+
         if (parent == null)
             return null;
 
         BuffStatusView existing = parent.GetComponentInChildren<BuffStatusView>(true);
+
         if (existing != null)
         {
             instance = existing;
@@ -189,6 +240,7 @@ public class BuffStatusView : MonoBehaviour
     private static Transform FindCombatHud()
     {
         GameObject combatHud = GameObject.Find("CombatHUD");
+
         if (combatHud != null)
             return combatHud.transform;
 
@@ -204,6 +256,7 @@ public class BuffStatusView : MonoBehaviour
             BuffItemType.AttackPower => new Color(1f, 0.18f, 0.18f, 0.95f),
             BuffItemType.FocusGauge => new Color(1f, 0.18f, 0.85f, 0.95f),
             BuffItemType.Invincible => new Color(0.45f, 0.9f, 1f, 0.95f),
+            BuffItemType.Heal => new Color(0.18f, 1f, 0.42f, 0.95f),
             _ => Color.white
         };
     }
@@ -214,16 +267,18 @@ public class BuffStatusView : MonoBehaviour
             return circleSprite;
 
         const int size = 64;
+
         Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
         Vector2 center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
         float radius = (size - 2) * 0.5f;
+        Color clear = new Color(1f, 1f, 1f, 0f);
 
         for (int y = 0; y < size; y++)
         {
             for (int x = 0; x < size; x++)
             {
                 float distance = Vector2.Distance(new Vector2(x, y), center);
-                texture.SetPixel(x, y, distance <= radius ? Color.white : new Color(1f, 1f, 1f, 0f));
+                texture.SetPixel(x, y, distance <= radius ? Color.white : clear);
             }
         }
 

@@ -32,6 +32,7 @@ public class BuffStatusSlotUI : MonoBehaviour
         EndTime = Time.time + Duration;
 
         EnsureView(slotSize, circleSprite);
+
         gameObject.SetActive(true);
         transform.localScale = Vector3.one;
 
@@ -44,9 +45,27 @@ public class BuffStatusSlotUI : MonoBehaviour
         UpdateView();
     }
 
+    // 같은 버프를 다시 획득했을 때 기존 슬롯의 남은 시간을 연장한다.
+    public void ExtendDuration(float additionalDuration)
+    {
+        if (additionalDuration <= 0f)
+            return;
+
+        float remaining = Mathf.Max(0f, EndTime - Time.time);
+
+        Duration = Mathf.Max(0.1f, remaining + additionalDuration);
+        EndTime = Time.time + Duration;
+
+        gameObject.SetActive(true);
+        transform.localScale = Vector3.one;
+
+        UpdateView();
+    }
+
     public bool UpdateView()
     {
         float remaining = EndTime - Time.time;
+
         if (remaining <= 0f)
         {
             ClearView();
@@ -69,6 +88,9 @@ public class BuffStatusSlotUI : MonoBehaviour
 
     public void ClearView()
     {
+        Duration = 0f;
+        EndTime = 0f;
+
         if (fillImage != null)
         {
             fillImage.fillAmount = 0f;
@@ -84,6 +106,7 @@ public class BuffStatusSlotUI : MonoBehaviour
         RectTransform.sizeDelta = new Vector2(slotSize, slotSize);
 
         LayoutElement layout = GetComponent<LayoutElement>();
+
         if (layout == null)
             layout = gameObject.AddComponent<LayoutElement>();
 
@@ -96,6 +119,7 @@ public class BuffStatusSlotUI : MonoBehaviour
 
         if (backgroundImage == null)
             backgroundImage = GetComponent<Image>();
+
         if (backgroundImage == null)
             backgroundImage = gameObject.AddComponent<Image>();
 
@@ -119,7 +143,9 @@ public class BuffStatusSlotUI : MonoBehaviour
         {
             GameObject textObject = new GameObject("TimeText");
             textObject.transform.SetParent(transform, false);
-            Stretch(textObject.AddComponent<RectTransform>(), Vector2.zero, Vector2.one);
+
+            RectTransform textRect = textObject.AddComponent<RectTransform>();
+            Stretch(textRect, Vector2.zero, Vector2.one);
 
             timeText = textObject.AddComponent<Text>();
             timeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -135,11 +161,14 @@ public class BuffStatusSlotUI : MonoBehaviour
     {
         GameObject imageObject = new GameObject(objectName);
         imageObject.transform.SetParent(transform, false);
-        Stretch(imageObject.AddComponent<RectTransform>(), anchorMin, anchorMax);
+
+        RectTransform imageRect = imageObject.AddComponent<RectTransform>();
+        Stretch(imageRect, anchorMin, anchorMax);
 
         Image image = imageObject.AddComponent<Image>();
         image.sprite = sprite;
         image.raycastTarget = false;
+
         return image;
     }
 

@@ -14,7 +14,7 @@ public class CombatFeedback : MonoBehaviour
     [SerializeField] private float maxKnockbackY = 0.7f;
 
     [Header("Damage Text")]
-    [SerializeField] private bool spawnDamageText;
+    [SerializeField] private WorldDamageText damageTextPrefab;
     [SerializeField] private Color damageTextColor = new Color(0.88f, 0.98f, 1f, 1f);
     [SerializeField] private Vector3 damageTextOffset = new Vector3(0f, 0.45f, 0f);
 
@@ -70,25 +70,28 @@ public class CombatFeedback : MonoBehaviour
 
     private void SpawnDamageText(DamageInfo info)
     {
-        if (!spawnDamageText)
+        if (damageTextPrefab == null)
             return;
 
         Vector3 position = (Vector3)info.HitPoint + damageTextOffset;
-        GameObject go = new GameObject("DamageText");
-        go.transform.position = position;
+        GameObject prefab = damageTextPrefab.gameObject;
 
-        TextMesh text = go.AddComponent<TextMesh>();
-        text.text = Mathf.RoundToInt(info.Damage).ToString();
-        text.fontSize = 36;
-        text.anchor = TextAnchor.MiddleCenter;
-        text.alignment = TextAlignment.Center;
-        text.color = GetReadableDamageTextColor();
-        text.characterSize = 0.08f;
+        GameObject go = ObjectPool.Instance != null
+            ? ObjectPool.Instance.Get(prefab, position, Quaternion.identity)
+            : Instantiate(prefab, position, Quaternion.identity);
 
-        MeshRenderer renderer = go.GetComponent<MeshRenderer>();
-        renderer.sortingOrder = 80;
+        if (go == null)
+            return;
 
-        go.AddComponent<WorldDamageText>();
+        WorldDamageText damageText = go.GetComponent<WorldDamageText>();
+
+        if (damageText == null)
+            return;
+
+        damageText.Play(
+            Mathf.RoundToInt(info.Damage),
+            GetReadableDamageTextColor()
+        );
     }
 
     private Color GetReadableDamageTextColor()

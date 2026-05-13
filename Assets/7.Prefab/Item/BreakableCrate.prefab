@@ -205,9 +205,9 @@ MonoBehaviour:
   knockbackMultiplier: 0.1
   maxKnockbackX: 1.2
   maxKnockbackY: 0.7
-  spawnDamageText: 1
-  damageTextColor: {r: 1, g: 0.92, b: 0.28, a: 1}
-  damageTextOffset: {x: 0, y: 0.55, z: 0}
+  damageTextPrefab: {fileID: 3817847656322557781, guid: 4b8c25fa18625e343898b9ff9a42f717, type: 3}
+  damageTextColor: {r: 1, g: 1, b: 1, a: 1}
+  damageTextOffset: {x: 0, y: 0.45, z: 0}
 --- !u!114 &5800272871802658669
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -227,6 +227,10 @@ MonoBehaviour:
   - {fileID: 7300000000000000000, guid: 3bd33e7ea11f4f44b90f02b8fb011b2a, type: 3}
   - {fileID: 7300000000000002000, guid: 238811f462ec4a5ab1fdb9fc62ff9f38, type: 3}
   - {fileID: 7300000000000001000, guid: 0374b2c19d644cdfbdf8b9ee286cc595, type: 3}
+  - {fileID: 7300000000000003000, guid: 9f2a0d6c4a8d4c6f9c52ba3db7aead31, type: 3}
   dropChance: 1
   shakeCamera: 1
   deactivateOnBreak: 1
+  respawnBlockRadius: 0.65
+  blockRespawnWhenItemExists: 1
+  blockRespawnWhenOtherBoxExists: 1

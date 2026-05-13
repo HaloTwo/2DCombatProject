@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3520d42df665a5443967a3d35486f533, type: 3}
   m_Name: Skill_DashAttack
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  displayName: "\uB300\uC26C\uACF5\uACA9"
-  icon: {fileID: 0}
+  displayName: "\uBC1C\uB3C4"
+  icon: {fileID: 7890767733243817056, guid: 0f2ba728f4fd41645acd755b6009eecb, type: 3}
   skillType: 0
   attackData: {fileID: 11400000, guid: 39c2531fcba78264f8bede06bc5e317e, type: 2}
-  cooldown: 0.5
+  cooldown: 2
   duration: 0.16
   range: 1.5
   force: 15

@@ -13,6 +13,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
     [SerializeField] private Health health;
 
     [Header("Dash Effect")]
+    [SerializeField] private GameObject dashGhostPrefab;
     [SerializeField] private Color dashGhostColor = new Color(0.55f, 0.85f, 1f, 0.48f);
     [SerializeField] private float dashGhostInterval = 0.035f;
     [SerializeField] private float dashGhostLifeTime = 0.22f;
@@ -220,32 +221,33 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
         if (spriteRenderer == null)
             return;
 
-        GameObject ghost = new GameObject("DashGhost");
-        ghost.transform.position = spriteRenderer.transform.position;
-        ghost.transform.rotation = spriteRenderer.transform.rotation;
-        ghost.transform.localScale = spriteRenderer.transform.lossyScale;
+        if (dashGhostPrefab == null || ObjectPool.Instance == null)
+        {
+            StartCoroutine(CoFallbackDashGhost(color));
+            return;
+        }
 
+        GameObject ghost = ObjectPool.Instance.Get(dashGhostPrefab, spriteRenderer.transform.position, spriteRenderer.transform.rotation);
+        if (ghost != null && ghost.TryGetComponent(out DashGhostPoolItem dashGhost))
+            dashGhost.Play(spriteRenderer, color, dashGhostLifeTime);
+    }
+
+    private IEnumerator CoFallbackDashGhost(Color color)
+    {
+        GameObject ghost = new GameObject("DashGhost_Fallback");
         SpriteRenderer renderer = ghost.AddComponent<SpriteRenderer>();
         renderer.sprite = spriteRenderer.sprite;
         renderer.flipX = spriteRenderer.flipX;
         renderer.flipY = spriteRenderer.flipY;
         renderer.sortingLayerID = spriteRenderer.sortingLayerID;
         renderer.sortingOrder = spriteRenderer.sortingOrder - 1;
-        renderer.color = color;
 
-        StartCoroutine(CoFadeDashGhost(renderer, ghost));
-    }
-
-    private IEnumerator CoFadeDashGhost(SpriteRenderer renderer, GameObject ghost)
-    {
         float elapsed = 0f;
-        Color startColor = renderer.color;
-
         while (elapsed < dashGhostLifeTime)
         {
             elapsed += Time.deltaTime;
-            float alpha = Mathf.Lerp(startColor.a, 0f, elapsed / dashGhostLifeTime);
-            renderer.color = new Color(startColor.r, startColor.g, startColor.b, alpha);
+            float alpha = Mathf.Lerp(color.a, 0f, elapsed / dashGhostLifeTime);
+            renderer.color = new Color(color.r, color.g, color.b, alpha);
             yield return null;
         }
 

@@ -17,7 +17,7 @@ MonoBehaviour:
     count: 2
     interval: 0.35
   - enemyPrefab: {fileID: 473343322696747890, guid: da0e61d4238e55d40b12aa663447c9c9, type: 3}
-    count: 2
+    count: 3
     interval: 0.45
   - enemyPrefab: {fileID: 3611472096208467707, guid: ac1c72ac9c254f14a99cddf91687ad3c, type: 3}
     count: 1

@@ -197,7 +197,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   team: 0
-  maxHp: 150
+  maxHp: 200
   invincibleTime: 0.15
 --- !u!114 &7360699896695574498
 MonoBehaviour:
@@ -247,7 +247,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   moveSpeed: 3.5
-  jumpPower: 9.5
+  jumpPower: 8.5
   maxJumpCount: 1
   coyoteTime: 0.1
   jumpBufferTime: 0.1
@@ -258,7 +258,7 @@ MonoBehaviour:
   wallCheckSize: {x: 0.68, y: 1.05}
   wallCheckDistance: 0.08
   minWallNormalX: 0.65
-  dashPower: 11
+  dashPower: 9
   dashDuration: 0.15
   dashCooldown: 0.5
   platformDropDuration: 0.28
@@ -286,12 +286,11 @@ MonoBehaviour:
   rb: {fileID: 8945240710127607946}
   animator: {fileID: 2260845058193702356}
   parryEffectPrefab: {fileID: 7727036360660970297, guid: bf1e9cdabf8b59841890ef8929e9f93f, type: 3}
-  guardFallbackTriggerName: Block
   parryWindow: 0.16
   guardDamageRate: 0.5
   parryHitStop: 0.07
   parryKnockback: 9
-  parryStartLockTime: 0.12
+  parryStartLockTime: 0.2
   parrySuccessLockTime: 0.16
 --- !u!114 &5369976282911732317
 MonoBehaviour:
@@ -326,9 +325,9 @@ MonoBehaviour:
   knockbackMultiplier: 0.1
   maxKnockbackX: 1.2
   maxKnockbackY: 0.7
-  spawnDamageText: 0
-  damageTextColor: {r: 1, g: 1, b: 1, a: 1}
-  damageTextOffset: {x: 0, y: 0.45, z: 0}
+  damageTextPrefab: {fileID: 3817847656322557781, guid: 4b8c25fa18625e343898b9ff9a42f717, type: 3}
+  damageTextColor: {r: 1, g: 0, b: 0, a: 1}
+  damageTextOffset: {x: 0, y: 0.3, z: 0}
 --- !u!114 &4846962692922688131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -347,6 +346,7 @@ MonoBehaviour:
   movement: {fileID: 4530850618612268224}
   rb: {fileID: 8945240710127607946}
   health: {fileID: 2655619090673079263}
+  dashGhostPrefab: {fileID: 6400000000000003000, guid: f984cf6deae141d88615030cbd987027, type: 3}
   dashGhostColor: {r: 0.55, g: 0.85, b: 1, a: 0.48}
   dashGhostInterval: 0.035
   dashGhostLifeTime: 0.22
@@ -414,10 +414,10 @@ MonoBehaviour:
   groundSlamShakeDuration: 0.12
   groundSlamShakePower: 0.13
   groundSlamHitStop: 0.06
-  groundSlamMaxFallWait: 0.65
+  groundSlamMaxFallWait: 0.1
   groundSlamJumpPower: 8.5
-  groundSlamDiveDelay: 0.16
-  groundSlamRecoveryLockTime: 0.75
+  groundSlamDiveDelay: 0.23
+  groundSlamRecoveryLockTime: 0.1
   groundSlamEffectBaseRadius: 2.3
   showGroundSlamGizmo: 1
   groundSlamGizmoColor: {r: 0.25, g: 0.75, b: 1, a: 0.55}

@@ -35,7 +35,8 @@ public enum BuffItemType
     MoveSpeed,
     AttackPower,
     FocusGauge,
-    Invincible
+    Invincible,
+    Heal
 }
 
 public enum BuffPickupType

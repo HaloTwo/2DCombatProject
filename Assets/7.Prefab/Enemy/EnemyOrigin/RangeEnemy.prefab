@@ -381,9 +381,9 @@ MonoBehaviour:
   knockbackMultiplier: 0.1
   maxKnockbackX: 1.2
   maxKnockbackY: 0.7
-  spawnDamageText: 1
-  damageTextColor: {r: 1, g: 0.92, b: 0.35, a: 1}
-  damageTextOffset: {x: 0, y: 0.45, z: 0}
+  damageTextPrefab: {fileID: 3817847656322557781, guid: 4b8c25fa18625e343898b9ff9a42f717, type: 3}
+  damageTextColor: {r: 1, g: 0.10849059, b: 0.6640766, a: 1}
+  damageTextOffset: {x: 0, y: 0.3, z: 0}
 --- !u!114 &244265496241171575
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -431,6 +431,7 @@ MonoBehaviour:
   burstProjectileCount: 2
   burstInterval: 0.25
   burstDropStep: 0.08
+  rangedChaseMaxHeightDifference: 2.4
 --- !u!1 &7233898168522048960
 GameObject:
   m_ObjectHideFlags: 0

@@ -31,13 +31,14 @@ public class SkillSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     {
         rectTransform = GetComponent<RectTransform>();
         canvasGroup = GetComponent<CanvasGroup>();
+
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
 
         if (background == null)
             background = GetComponent<Image>();
 
-        EnsureCircularView();
+        //SetupView();
     }
 
     public void Bind(SkillSlotBarUI newOwner, int newSlotIndex)
@@ -48,8 +49,11 @@ public class SkillSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     public void SetLabel(string key, SkillData skill)
     {
-        if (keyText != null) keyText.text = key;
-        if (skillText != null) skillText.text = skill != null ? skill.DisplayName : "Empty";
+        if (keyText != null)
+            keyText.text = key;
+
+        if (skillText != null)
+            skillText.text = skill != null ? skill.DisplayName : "Empty";
 
         if (iconImage != null)
         {
@@ -60,14 +64,14 @@ public class SkillSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         if (background != null)
         {
             background.sprite = GetCircleSprite();
-            background.color = slotIndex == 0 ? new Color(0.1f, 0.35f, 0.75f, 0.9f) : new Color(0.55f, 0.2f, 0.75f, 0.9f);
+            background.color = slotIndex == 0
+                ? new Color(0.1f, 0.35f, 0.75f, 0.9f)
+                : new Color(0.55f, 0.2f, 0.75f, 0.9f);
         }
     }
 
     public void SetCooldown(float ratio, float remainingSeconds)
     {
-        EnsureCircularView();
-
         bool hasCooldown = ratio > 0.001f;
 
         if (cooldownOverlay != null)
@@ -132,40 +136,46 @@ public class SkillSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         owner?.RequestSwap(from, this);
     }
 
-    private void EnsureCircularView()
+    // UI 오브젝트는 씬에서 미리 만들어 참조한다.
+    // 여기서는 런타임에 새 UI를 생성하지 않고, 필요한 표시 속성만 세팅한다.
+    private void SetupView()
     {
         Sprite circle = GetCircleSprite();
+
         if (background != null)
-            background.sprite = circle;
-
-        if (iconImage == null)
-            iconImage = CreateImage("Icon", new Color(1f, 1f, 1f, 1f), new Vector2(0.16f, 0.16f), new Vector2(0.84f, 0.84f), true);
-
-        if (cooldownOverlay == null)
         {
-            cooldownOverlay = CreateImage("CooldownOverlay", new Color(0f, 0f, 0f, 0.45f), Vector2.zero, Vector2.one, false);
-            cooldownOverlay.enabled = false;
+            background.sprite = circle;
+            background.raycastTarget = true;
         }
 
-        if (cooldownFill == null)
+        if (iconImage != null)
         {
-            cooldownFill = CreateImage("CooldownFill", new Color(0f, 0f, 0f, 0.68f), Vector2.zero, Vector2.one, false);
+            iconImage.raycastTarget = false;
+            iconImage.preserveAspect = true;
+        }
+
+        if (cooldownOverlay != null)
+        {
+            cooldownOverlay.enabled = false;
+            cooldownOverlay.color = new Color(0f, 0f, 0f, 0.45f);
+            cooldownOverlay.raycastTarget = false;
+        }
+
+        if (cooldownFill != null)
+        {
+            cooldownFill.sprite = circle;
+            cooldownFill.color = new Color(0f, 0f, 0f, 0.68f);
             cooldownFill.type = Image.Type.Filled;
             cooldownFill.fillMethod = Image.FillMethod.Radial360;
             cooldownFill.fillOrigin = (int)Image.Origin360.Top;
             cooldownFill.fillClockwise = true;
             cooldownFill.fillAmount = 0f;
+            cooldownFill.enabled = false;
+            cooldownFill.raycastTarget = false;
         }
 
-        if (cooldownText == null)
+        if (cooldownText != null)
         {
-            GameObject textObject = new GameObject("CooldownText");
-            textObject.transform.SetParent(transform, false);
-            Stretch(textObject.AddComponent<RectTransform>(), Vector2.zero, Vector2.one);
-
-            cooldownText = textObject.AddComponent<Text>();
-            cooldownText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            cooldownText.fontSize = 22;
             cooldownText.fontStyle = FontStyle.Bold;
             cooldownText.alignment = TextAnchor.MiddleCenter;
             cooldownText.color = Color.white;
@@ -173,33 +183,12 @@ public class SkillSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
             cooldownText.enabled = false;
         }
 
-        if (highlightImage == null)
+        if (highlightImage != null)
         {
-            highlightImage = CreateImage("Highlight", new Color(1f, 1f, 1f, 0f), Vector2.zero, Vector2.one, false);
             highlightImage.enabled = true;
+            highlightImage.color = new Color(1f, 1f, 1f, 0f);
+            highlightImage.raycastTarget = false;
         }
-    }
-
-    private Image CreateImage(string objectName, Color color, Vector2 anchorMin, Vector2 anchorMax, bool preserveAspect)
-    {
-        GameObject imageObject = new GameObject(objectName);
-        imageObject.transform.SetParent(transform, false);
-        Stretch(imageObject.AddComponent<RectTransform>(), anchorMin, anchorMax);
-
-        Image image = imageObject.AddComponent<Image>();
-        image.sprite = GetCircleSprite();
-        image.color = color;
-        image.preserveAspect = preserveAspect;
-        image.raycastTarget = false;
-        return image;
-    }
-
-    private static void Stretch(RectTransform target, Vector2 anchorMin, Vector2 anchorMax)
-    {
-        target.anchorMin = anchorMin;
-        target.anchorMax = anchorMax;
-        target.offsetMin = Vector2.zero;
-        target.offsetMax = Vector2.zero;
     }
 
     private void PlayFeedback(Color color, float scale, float duration)
@@ -215,9 +204,8 @@ public class SkillSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
 
     private IEnumerator CoFeedback(Color color, float scale, float duration)
     {
-        EnsureCircularView();
-
         Vector3 originScale = Vector3.one;
+
         if (highlightImage != null)
             highlightImage.color = color;
 
@@ -233,21 +221,25 @@ public class SkillSlotUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
         }
 
         time = 0f;
+
         while (time < half)
         {
             time += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(time / half);
             transform.localScale = Vector3.Lerp(Vector3.one * scale, originScale, t);
+
             if (highlightImage != null)
             {
                 Color faded = color;
                 faded.a = Mathf.Lerp(color.a, 0f, t);
                 highlightImage.color = faded;
             }
+
             yield return null;
         }
 
         transform.localScale = originScale;
+
         if (highlightImage != null)
             highlightImage.color = new Color(color.r, color.g, color.b, 0f);
 

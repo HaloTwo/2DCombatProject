@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3520d42df665a5443967a3d35486f533, type: 3}
   m_Name: Skill_RisingSlash
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
-  displayName: "\uACF5\uC911\uACF5\uACA9"
-  icon: {fileID: 0}
+  displayName: "\uACF5\uC911\uCF64\uBCF4"
+  icon: {fileID: 7056769035624938690, guid: cdffc9de0e776cd4898600cc8a94d277, type: 3}
   skillType: 2
   attackData: {fileID: 11400000, guid: 5149b50db0613b746b3a580681e7f270, type: 2}
   cooldown: 2.2

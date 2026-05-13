@@ -84,7 +84,7 @@ SpriteRenderer:
   m_SortingOrder: 30
   m_MaskInteraction: 0
   m_Sprite: {fileID: -5255626403578697751, guid: 5d6bdc2c6fb11b84f9cec48f1c58374a, type: 3}
-  m_Color: {r: 0.89550424, g: 1, b: 0.8820755, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -128,7 +128,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.3
+  m_Radius: 0.15
 --- !u!114 &7300000000000000004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,5 +146,6 @@ MonoBehaviour:
   moveSpeedMultiplier: 1.35
   attackPowerMultiplier: 1
   focusGaugeAmount: 0
-  pickupEffectPrefab: {fileID: 7700100000000000000, guid: 07f3ad08cffb4f04a883f0b669f78117, type: 3}
+  healAmount: 25
+  pickupEffectPrefab: {fileID: 0}
   deactivateOnPickup: 1

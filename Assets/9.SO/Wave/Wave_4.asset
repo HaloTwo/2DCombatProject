@@ -14,15 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WaveData
   enemies:
   - enemyPrefab: {fileID: 473343322696747890, guid: da0e61d4238e55d40b12aa663447c9c9, type: 3}
-    count: 4
+    count: 3
     interval: 0.25
   - enemyPrefab: {fileID: 3128150407102862589, guid: 70ecd3f64c110f54394bae7bf74ecf9f, type: 3}
-    count: 4
+    count: 3
     interval: 0.35
   - enemyPrefab: {fileID: 2266093475498161095, guid: e0f31213d8cc39d4099706d60e67c9be, type: 3}
-    count: 3
+    count: 2
     interval: 2
   - enemyPrefab: {fileID: 3128150407102862589, guid: 6dd1a9b234ad51b48a9f5d2821aecc62, type: 3}
-    count: 3
+    count: 2
     interval: 2
   nextWaveDelay: 1.2
+  isBossWave: 0
+  bossName: BOSS

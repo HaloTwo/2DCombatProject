@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Skill_ProjectileSlash
   m_EditorClassIdentifier: Assembly-CSharp::SkillData
   displayName: "\uAC80\uAE30"
-  icon: {fileID: 0}
+  icon: {fileID: -8957741783402518163, guid: 59929b29db5c24f44b2f25b900a8d16f, type: 3}
   skillType: 1
   attackData: {fileID: 11400000, guid: 3c76e06de7579f540a9551092ff6210b, type: 2}
-  cooldown: 1.8
+  cooldown: 1.25
   duration: 0.16
   range: 7
   force: 1.5

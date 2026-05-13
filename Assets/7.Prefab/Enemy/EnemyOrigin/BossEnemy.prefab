@@ -67,7 +67,7 @@ PrefabInstance:
     - target: {fileID: 6092808699094499222, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
       propertyPath: meleeEnemy
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 8600812432565985802}
     - target: {fileID: 7439954532678875669, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
       propertyPath: m_Name
       value: BossEnemy
@@ -167,7 +167,12 @@ MonoBehaviour:
   attackData: {fileID: 11400000, guid: 9188a404db5840d4978c777142452cee, type: 2}
   attackCooldown: 1.55
   attackStateDuration: 0.75
+  attackStartXPadding: 0.28
+  attackStartYTolerance: 0.85
   phaseTwoHpRatio: 0.5
   phaseTwoSpeedMultiplier: 1.3
   phaseTwoColor: {r: 1, g: 0.38, b: 0.38, a: 1}
   shakeOnSpawn: 1
+  hitReactionDamageThreshold: 45
+  hitReactionCooldown: 1.2
+  hitReactionStunTime: 0.18

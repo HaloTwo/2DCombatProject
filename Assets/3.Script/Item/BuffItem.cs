@@ -7,12 +7,14 @@ public class BuffItem : MonoBehaviour
     [SerializeField, KoreanLabel("이동 속도 배율")] private float moveSpeedMultiplier = 1.35f;
     [SerializeField, KoreanLabel("공격력 배율")] private float attackPowerMultiplier = 1.4f;
     [SerializeField, KoreanLabel("포커스 충전량")] private float focusGaugeAmount = 25f;
+    [SerializeField, KoreanLabel("체력 회복량")] private float healAmount = 25f;
     [SerializeField, KoreanLabel("획득 이펙트")] private GameObject pickupEffectPrefab;
     [SerializeField, KoreanLabel("획득 후 비활성화")] private bool deactivateOnPickup = true;
 
     private const float DefaultMoveSpeedMultiplier = 1.35f;
     private const float DefaultAttackPowerMultiplier = 1.4f;
     private const float DefaultFocusGaugeAmount = 25f;
+    private const float DefaultHealAmount = 25f;
     private const float DefaultInvincibleDuration = 3f;
 
     private bool consumed;
@@ -63,12 +65,14 @@ public class BuffItem : MonoBehaviour
 
             case BuffItemType.FocusGauge:
                 HUDView.Instance?.AddFocusGauge(GetEffectiveFocusGaugeAmount());
-                BuffStatusView.Show(buffType, 1.2f);
                 break;
 
             case BuffItemType.Invincible:
                 player.GetComponent<Health>()?.SetInvincibleFor(buffDuration);
-                BuffStatusView.Show(buffType, buffDuration);
+                break;
+
+            case BuffItemType.Heal:
+                player.GetComponent<Health>()?.Heal(GetEffectiveHealAmount());
                 break;
         }
     }
@@ -94,6 +98,11 @@ public class BuffItem : MonoBehaviour
     private float GetEffectiveFocusGaugeAmount()
     {
         return focusGaugeAmount > 0f ? focusGaugeAmount : DefaultFocusGaugeAmount;
+    }
+
+    private float GetEffectiveHealAmount()
+    {
+        return healAmount > 0f ? healAmount : DefaultHealAmount;
     }
 
     private static PlayerBuffTrail GetOrAddBuffTrail(GameObject player)
