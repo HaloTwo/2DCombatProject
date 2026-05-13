@@ -38,7 +38,7 @@ public class MeleeChargerEnemy : EnemyBrainBase
             return;
         }
 
-        if (IsTargetInsideAttackHitbox(attackHitbox))
+        if (CanStartMeleeAttack())
         {
             StopMove();
             Face(target.position.x - transform.position.x);
@@ -48,6 +48,14 @@ public class MeleeChargerEnemy : EnemyBrainBase
 
         state = EnemyState.Chase;
         MoveToTarget();
+    }
+
+    private bool CanStartMeleeAttack()
+    {
+        if (target == null)
+            return false;
+
+        return IsTargetInsideAttackHitbox(attackHitbox) || IsTargetInAttackRange();
     }
 
     private void TryAttack()
@@ -63,7 +71,7 @@ public class MeleeChargerEnemy : EnemyBrainBase
             animator.SetTrigger("Attack");
     }
 
-    // 공격 애니메이션 이벤트에서 판정이 실제로 닿는 프레임에 호출한다.
+    // 공격 애니메이션 이벤트에서 실제 타격 프레임에 호출된다.
     public void OpenAttackHitbox()
     {
         if (state != EnemyState.Attack || attackHitbox == null || attackData == null)

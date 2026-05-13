@@ -24,6 +24,7 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
     private bool wasDashing;
     private bool isDead;
     private float nextDashGhostTime;
+    private float attackMotionHoldUntilTime;
     private Color originColor = Color.white;
     private Coroutine dashGhostBurstRoutine;
 
@@ -83,6 +84,15 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
         float verticalSpeed = rb != null ? rb.linearVelocity.y : 0f;
 
         SetBool("Grounded", grounded);
+        if (Time.time < attackMotionHoldUntilTime)
+        {
+            SetBool("IsMoving", false);
+            SetFloat("AirSpeedY", verticalSpeed);
+            SetInteger("AnimState", 0);
+            SetBool("IdleBlock", false);
+            return;
+        }
+
         SetBool("IsMoving", grounded && Mathf.Abs(horizontal) > 0.01f);
         SetFloat("AirSpeedY", verticalSpeed);
         SetInteger("AnimState", grounded && Mathf.Abs(horizontal) > 0.01f ? 1 : 0);
@@ -102,6 +112,15 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
             SetTriggerFirst("Dash", "Roll");
 
         // 가드/패링 시작 트리거는 PlayerGuard에서만 처리한다.
+    }
+
+    // PlayerCombat이 공격 트리거를 넣는 순간 호출한다. 공격 시작 프레임의 파라미터 충돌을 막는다.
+    public void HoldAttackMotion(float duration)
+    {
+        attackMotionHoldUntilTime = Mathf.Max(attackMotionHoldUntilTime, Time.time + Mathf.Max(0f, duration));
+        SetBool("IsMoving", false);
+        SetInteger("AnimState", 0);
+        SetBool("IdleBlock", false);
     }
 
     private void UpdateFacing()

@@ -113,7 +113,12 @@ public class Projectile : MonoBehaviour, IPoolable, IParryReactable
         float damage = ownerTeam == Team.Player ? PlayerDamageBuff.ModifyPlayerDamage(attackData.damage) : attackData.damage;
         DamageInfo info = new DamageInfo(ownerTeam, damage, other.ClosestPoint(transform.position), attackData.knockback, attackData.hitStopTime);
         if (hurtbox.ApplyDamage(info, this))
+        {
+            if (ownerTeam == Team.Player)
+                SoundManager.Instance?.PlayRandomBladeHit();
+
             ReleaseWithImpact(other.ClosestPoint(transform.position));
+        }
     }
 
     public void OnParried(Vector2 parryPoint, Vector2 parryDirection)

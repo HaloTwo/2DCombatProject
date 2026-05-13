@@ -4,6 +4,8 @@ using System.Collections;
 public class GameManager : Singleton<GameManager>
 {
     [SerializeField] private GameState state = GameState.Ready;
+    [SerializeField, KoreanLabel("게임 BGM")] private BGMType gameBgm = BGMType.MainBGM;
+    [SerializeField, KoreanLabel("시작 시 BGM 재생")] private bool playBgmOnStart = true;
 
     [Header("게임오버 연출")]
     [SerializeField, KoreanLabel("사망 슬로우 배율")] private float gameOverSlowScale = 0.18f;
@@ -15,11 +17,18 @@ public class GameManager : Singleton<GameManager>
     public bool CanShowGameOverMenu { get; private set; }
     public bool IsPaused => state == GameState.Paused;
 
+    private void Start()
+    {
+        if (state == GameState.Playing)
+            PlayGameBGM();
+    }
+
     public void StartGame()
     {
         Time.timeScale = 1f;
         CanShowGameOverMenu = false;
         state = GameState.Playing;
+        PlayGameBGM();
     }
 
     public void ClearGame()
@@ -65,5 +74,14 @@ public class GameManager : Singleton<GameManager>
         yield return new WaitForSecondsRealtime(Mathf.Max(gameOverSlowDuration, minGameOverPresentationTime));
         CanShowGameOverMenu = true;
         Time.timeScale = pauseAfterGameOver ? 0f : 1f;
+    }
+
+    // 로딩씬이 끝나고 GameScene에 들어왔을 때 메인 전투 BGM을 한 번만 재생한다.
+    private void PlayGameBGM()
+    {
+        if (!playBgmOnStart)
+            return;
+
+        SoundManager.Instance?.PlayBGM(gameBgm);
     }
 }

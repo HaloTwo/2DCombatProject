@@ -107,11 +107,11 @@ public class ResultView : MonoBehaviour
         if (panelRect == null)
             return;
 
-        if (panel.transform.Find("RetryButton") == null)
-            CreateButton(panelRect, "RetryButton", "다시하기", new Vector2(-90f, -80f), Retry);
+        Button retryButton = GetOrCreateButton(panelRect, "RetryButton", "다시하기", new Vector2(-90f, -80f), Retry);
+        ConfigureButton(retryButton, "다시하기", new Vector2(-90f, -80f));
 
-        if (panel.transform.Find("StartButton") == null)
-            CreateButton(panelRect, "StartButton", "처음으로", new Vector2(90f, -80f), GoToStart);
+        Button startButton = GetOrCreateButton(panelRect, "StartButton", "처음으로", new Vector2(90f, -80f), GoToStart);
+        ConfigureButton(startButton, "처음으로", new Vector2(90f, -80f));
     }
 
     // 재시작/타이틀 이동 전에 현재 씬에서 풀로 꺼낸 몹, 투사체, 포커스 슬로우 상태를 정리한다.
@@ -119,6 +119,7 @@ public class ResultView : MonoBehaviour
     {
         Time.timeScale = 1f;
         FocusModeController.Stop();
+        SoundManager.Instance?.StopBGM();
         WaveManager.Instance?.StopAndClearWaves();
 
         if (ObjectPool.Instance != null)
@@ -195,5 +196,41 @@ public class ResultView : MonoBehaviour
         text.color = Color.white;
 
         return button;
+    }
+
+    private Button GetOrCreateButton(RectTransform parent, string name, string label, Vector2 position, UnityEngine.Events.UnityAction onClick)
+    {
+        Transform existing = parent.transform.Find(name);
+        if (existing == null)
+            return CreateButton(parent, name, label, position, onClick);
+
+        Button button = existing.GetComponent<Button>();
+        if (button == null)
+            button = existing.gameObject.AddComponent<Button>();
+
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(onClick);
+        return button;
+    }
+
+    // 씬에 미리 배치된 버튼도 결과창 규칙에 맞게 텍스트/위치만 정리한다.
+    private void ConfigureButton(Button button, string label, Vector2 position)
+    {
+        if (button == null)
+            return;
+
+        RectTransform rect = button.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = new Vector2(150f, 46f);
+        }
+
+        Text text = button.GetComponentInChildren<Text>(true);
+        if (text != null)
+            text.text = label;
     }
 }

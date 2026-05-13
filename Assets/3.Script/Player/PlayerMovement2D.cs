@@ -290,6 +290,7 @@ public class PlayerMovement2D : Singleton<PlayerMovement2D>
         jumpCount = canGroundJump ? 1 : jumpCount + 1;
         lastJumpPressedTime = -999f;
         lastGroundedTime = -999f;
+        SoundManager.Instance?.PlayJump();
     }
 
     private void TryDash()
@@ -306,6 +307,7 @@ public class PlayerMovement2D : Singleton<PlayerMovement2D>
         nextDashTime = Time.time + dashCooldown;
         health?.SetInvincibleFor(dashDuration + 0.05f);
         BeginDashEnemyPassThrough();
+        SoundManager.Instance?.PlayDash();
 
         float originGravity = rb.gravityScale;
         float dashDir = input != null && Mathf.Abs(input.Move.x) > 0.01f ? Mathf.Sign(input.Move.x) : facing;

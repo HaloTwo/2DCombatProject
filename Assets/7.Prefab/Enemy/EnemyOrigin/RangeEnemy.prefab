@@ -400,7 +400,7 @@ MonoBehaviour:
   health: {fileID: 6316116087701598187}
   animator: {fileID: 8287005277241916383}
   playerTag: Player
-  detectRange: 6
+  detectRange: 6.5
   attackRange: 1.2
   moveSpeed: 1.15
   patrolWhenIdle: 1
@@ -416,16 +416,21 @@ MonoBehaviour:
   groundCheckDistance: 0.7
   obstacleCheckDistance: 0.45
   targetHeightJumpThreshold: 0.55
+  chaseMaxHeightDifference: 2.4
   minPlatformJumpHeight: 1.1
   jumpCooldown: 0.65
   blockedStopTime: 0.2
+  chaseStopXDistance: 0.12
   projectileAttackData: {fileID: 11400000, guid: ee0db2649bbb3814fb38917a87910fb2, type: 2}
   projectilePrefab: {fileID: 5912218434252096546, guid: e2108d409e9dfaf46bdbbb19206088ad, type: 3}
   firePoint: {fileID: 6588574951220383475}
   keepDistance: 3.8
-  fireCooldown: 1.35
+  fireCooldown: 3
   attackMotionLockTime: 0.55
-  arcTargetHeightOffset: 0.35
+  arcTargetHeightOffset: -0.15
+  burstProjectileCount: 2
+  burstInterval: 0.25
+  burstDropStep: 0.08
 --- !u!1 &7233898168522048960
 GameObject:
   m_ObjectHideFlags: 0

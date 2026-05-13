@@ -42,6 +42,7 @@ public class PlayerFocusBurst : MonoBehaviour
         FocusModeController.BeginPreviewSlow(enemySpeedMultiplier, projectileSpeedMultiplier);
         backgroundDimmer?.Show();
 
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxFocusMode, SFXType.Skill);
         PlayStartEffect();
         ApplyBurst();
     }

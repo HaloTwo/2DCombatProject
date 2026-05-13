@@ -28,9 +28,11 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     [SerializeField, KoreanLabel("바닥 검사 거리")] protected float groundCheckDistance = 0.7f;
     [SerializeField, KoreanLabel("장애물 검사 거리")] protected float obstacleCheckDistance = 0.45f;
     [SerializeField, KoreanLabel("추적 점프 높이 기준")] protected float targetHeightJumpThreshold = 0.55f;
+    [SerializeField, KoreanLabel("추적 최대 높이 차이")] protected float chaseMaxHeightDifference = 1.1f;
     [SerializeField, KoreanLabel("최소 플랫폼 점프 높이")] protected float minPlatformJumpHeight = 1.1f;
     [SerializeField, KoreanLabel("점프 쿨타임")] protected float jumpCooldown = 0.65f;
     [SerializeField, KoreanLabel("막힘 회피 시간")] protected float blockedStopTime = 0.2f;
+    [SerializeField, KoreanLabel("추적 X축 정지 거리")] protected float chaseStopXDistance = 0.12f;
 
     protected Transform target;
     protected EnemyState state = EnemyState.Idle;
@@ -41,7 +43,6 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     protected float EffectiveMoveSpeed => moveSpeed * FocusModeController.EnemySpeedMultiplier;
     protected float EnemyTimeScale => Mathf.Clamp(FocusModeController.EnemySpeedMultiplier, 0.05f, 1f);
     private float nextJumpTime;
-    private float blockedUntilTime;
     private float nextPatrolTurnTime;
     private Collider2D[] bodyColliders;
     private Collider2D[] playerColliders;
@@ -128,11 +129,26 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
             return;
         }
 
-        float distSqr = ((Vector2)target.position - rb.position).sqrMagnitude;
-        if (distSqr > detectRange * detectRange)
+        if (!CanChaseTarget())
             state = EnemyState.Idle;
         else if (state == EnemyState.Idle)
             state = EnemyState.Chase;
+    }
+
+    // 지상 몬스터는 벽 너머나 높은 플랫폼 위의 플레이어를 무리하게 추적하지 않고 순찰을 유지한다.
+    protected virtual bool CanChaseTarget()
+    {
+        if (target == null || rb == null)
+            return false;
+
+        Vector2 delta = (Vector2)target.position - rb.position;
+        if (delta.sqrMagnitude > detectRange * detectRange)
+            return false;
+
+        if (delta.y > chaseMaxHeightDifference)
+            return false;
+
+        return !HasTerrainBetweenTarget();
     }
 
     protected bool IsTargetInAttackRange()
@@ -180,22 +196,27 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
             return;
         }
 
-        Vector2 dir = ((Vector2)target.position - rb.position).normalized;
-        float xDirection = Mathf.Sign(dir.x);
-
-        if (Mathf.Abs(dir.x) > 0.01f)
-            TryPlatformJump(xDirection);
-
-        if (Mathf.Abs(dir.x) > 0.01f && IsBlockedWithoutUsefulJump(xDirection))
+        Vector2 delta = (Vector2)target.position - rb.position;
+        float xDistance = Mathf.Abs(delta.x);
+        if (xDistance <= chaseStopXDistance)
         {
-            blockedUntilTime = Time.time + blockedStopTime;
-            rb.linearVelocity = new Vector2(-xDirection * EffectiveMoveSpeed * patrolSpeedMultiplier, rb.linearVelocity.y);
-            Face(dir.x);
+            StopMove();
+            Face(delta.x);
             return;
         }
 
-        rb.linearVelocity = new Vector2(dir.x * EffectiveMoveSpeed, rb.linearVelocity.y);
-        Face(dir.x);
+        float xDirection = Mathf.Sign(delta.x);
+        TryPlatformJump(xDirection);
+
+        if (IsBlockedWithoutUsefulJump(xDirection))
+        {
+            StopMove();
+            Face(xDirection);
+            return;
+        }
+
+        rb.linearVelocity = new Vector2(xDirection * EffectiveMoveSpeed, rb.linearVelocity.y);
+        Face(delta.x);
     }
 
     // 플레이어를 감지하지 못한 지상 몬스터가 낭떠러지나 벽을 만나기 전까지 좌우로 순찰한다.
@@ -216,13 +237,41 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
         float direction = Mathf.Sign(patrolDirection == 0f ? facing : patrolDirection);
         if (Time.time >= nextPatrolTurnTime && (HasPatrolWallAhead(direction) || !HasGroundAhead(direction)))
         {
-            direction *= -1f;
-            patrolDirection = direction;
-            nextPatrolTurnTime = Time.time + patrolTurnCooldown;
+            direction = TurnPatrolDirection(direction);
         }
 
         rb.linearVelocity = new Vector2(direction * EffectiveMoveSpeed * patrolSpeedMultiplier, rb.linearVelocity.y);
         Face(direction);
+    }
+
+    // 순찰 중 벽에 실제로 닿은 경우에도 방향을 바꿔서 벽을 계속 밀지 않게 한다.
+    protected virtual void OnCollisionStay2D(Collision2D collision)
+    {
+        if (state != EnemyState.Idle || Time.time < nextPatrolTurnTime)
+            return;
+
+        float direction = Mathf.Sign(patrolDirection == 0f ? facing : patrolDirection);
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            ContactPoint2D contact = collision.GetContact(i);
+            if (Mathf.Abs(contact.normal.x) < 0.65f)
+                continue;
+
+            bool wallBlocksPatrol = contact.normal.x * direction < -0.1f;
+            if (!wallBlocksPatrol)
+                continue;
+
+            TurnPatrolDirection(direction);
+            return;
+        }
+    }
+
+    private float TurnPatrolDirection(float currentDirection)
+    {
+        float nextDirection = -Mathf.Sign(currentDirection == 0f ? facing : currentDirection);
+        patrolDirection = nextDirection;
+        nextPatrolTurnTime = Time.time + patrolTurnCooldown;
+        return nextDirection;
     }
 
     protected void StopMove()
@@ -260,15 +309,15 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
         if (rb == null)
             return false;
 
-        RaycastHit2D hit = Physics2D.Raycast(rb.position, Vector2.down, groundCheckDistance, groundMask);
-        return hit.collider != null && !hit.collider.isTrigger;
+        RaycastHit2D[] hits = Physics2D.RaycastAll(rb.position, Vector2.down, groundCheckDistance, groundMask);
+        return TryGetTerrainHit(hits, out _);
     }
 
     protected bool HasObstacleAhead(float direction)
     {
         Vector2 origin = rb.position + Vector2.up * 0.15f;
-        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.right * direction, obstacleCheckDistance, groundMask);
-        return hit.collider != null && !hit.collider.isTrigger;
+        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, Vector2.right * direction, obstacleCheckDistance, groundMask);
+        return TryGetTerrainHit(hits, out _);
     }
 
     // 순찰 중 바로 앞 벽만 짧게 검사해서 코너에 닿았다고 과하게 방향 전환하지 않게 한다.
@@ -276,8 +325,8 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
     {
         Vector2 origin = rb.position + Vector2.up * 0.15f;
         float distance = Mathf.Min(patrolWallCheckDistance, 0.18f);
-        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.right * direction, distance, groundMask);
-        return hit.collider != null && !hit.collider.isTrigger;
+        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, Vector2.right * direction, distance, groundMask);
+        return TryGetTerrainHit(hits, out _);
     }
 
     // 이동 방향 앞쪽 바닥을 넉넉히 확인해서 좁은 발판에서 제자리 왕복하는 빈도를 줄인다.
@@ -286,8 +335,72 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
         float forwardDistance = Mathf.Max(patrolEdgeCheckForward, 0.72f);
         float downDistance = Mathf.Max(patrolEdgeCheckDown, 1.25f);
         Vector2 origin = rb.position + new Vector2(direction * forwardDistance, 0f);
-        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.down, downDistance, groundMask);
-        return hit.collider != null && !hit.collider.isTrigger;
+        RaycastHit2D[] hits = Physics2D.RaycastAll(origin, Vector2.down, downDistance, groundMask);
+        return TryGetTerrainHit(hits, out _);
+    }
+
+    private bool TryGetTerrainHit(RaycastHit2D[] hits, out RaycastHit2D terrainHit)
+    {
+        for (int i = 0; i < hits.Length; i++)
+        {
+            RaycastHit2D hit = hits[i];
+            if (IsTerrainCollider(hit.collider))
+            {
+                terrainHit = hit;
+                return true;
+            }
+        }
+
+        terrainHit = default;
+        return false;
+    }
+
+    private bool HasTerrainBetweenTarget()
+    {
+        if (target == null || rb == null)
+            return false;
+
+        Vector2 from = rb.position + Vector2.up * 0.35f;
+        Vector2 to = (Vector2)target.position + Vector2.up * 0.35f;
+        float targetDistance = Vector2.Distance(from, to);
+        RaycastHit2D[] hits = Physics2D.LinecastAll(from, to, groundMask);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            RaycastHit2D hit = hits[i];
+            if (!IsTerrainCollider(hit.collider))
+                continue;
+
+            if (hit.distance < targetDistance - 0.15f)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsTerrainCollider(Collider2D collider)
+    {
+        if (collider == null || collider.isTrigger)
+            return false;
+
+        if (IsOwnCollider(collider))
+            return false;
+
+        return collider.GetComponentInParent<Health>() == null;
+    }
+
+    private bool IsOwnCollider(Collider2D collider)
+    {
+        if (bodyColliders == null)
+            return false;
+
+        for (int i = 0; i < bodyColliders.Length; i++)
+        {
+            if (bodyColliders[i] == collider)
+                return true;
+        }
+
+        return false;
     }
 
     // 비활성화된 공격 히트박스도 공격 사정거리 판단에 쓸 수 있게 월드 Bounds를 계산한다.
@@ -317,13 +430,14 @@ public abstract class EnemyBrainBase : MonoBehaviour, IParryReactable
         return source.bounds;
     }
 
+    // 추적 중 낮은 벽/블록에 몸을 계속 비비지 않도록, 점프로 해결할 상황이 아니면 짧게 뒤로 빠진다.
     protected bool IsBlockedWithoutUsefulJump(float direction)
     {
         if (!IsGrounded() || !HasObstacleAhead(direction))
             return false;
 
         bool targetIsHigher = target != null && target.position.y - transform.position.y > targetHeightJumpThreshold;
-        return !targetIsHigher && Time.time < nextJumpTime;
+        return !targetIsHigher;
     }
 
     protected void Face(float xDirection)

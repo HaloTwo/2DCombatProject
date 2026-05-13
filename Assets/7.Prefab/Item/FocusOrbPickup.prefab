@@ -145,6 +145,6 @@ MonoBehaviour:
   duration: 0
   moveSpeedMultiplier: 1
   attackPowerMultiplier: 1
-  focusGaugeAmount: 30
+  focusGaugeAmount: 25
   pickupEffectPrefab: {fileID: 7700100000000000000, guid: 07f3ad08cffb4f04a883f0b669f78117, type: 3}
   deactivateOnPickup: 1

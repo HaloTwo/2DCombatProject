@@ -48,6 +48,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6316116087701598187, guid: d1f1a0bff4b7b984c93d89593d9d23ae, type: 3}
+      propertyPath: maxHp
+      value: 40
+      objectReference: {fileID: 0}
     - target: {fileID: 6724196567283876652, guid: d1f1a0bff4b7b984c93d89593d9d23ae, type: 3}
       propertyPath: m_Name
       value: MushroomEnemy

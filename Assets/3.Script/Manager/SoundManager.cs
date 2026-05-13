@@ -7,7 +7,7 @@ public class SoundManager : Singleton<SoundManager>
     [Header("Audio")]
     [SerializeField, KoreanLabel("BGM 오디오 소스")] private AudioSource bgmSource;
     [SerializeField, KoreanLabel("SFX 풀 크기")] private int sfxPoolSize = 12;
-    [SerializeField, KoreanLabel("BGM 볼륨")] private float bgmVolume = 0.5f;
+    [SerializeField, KoreanLabel("BGM 볼륨")] private float bgmVolume = 0.2f;
     [SerializeField, KoreanLabel("SFX 볼륨")] private float sfxVolume = 1f;
 
     private const string BgmResourcePath = "Sound/BGM";
@@ -16,7 +16,22 @@ public class SoundManager : Singleton<SoundManager>
 
     private readonly Dictionary<BGMType, AudioClip> bgmMap = new();
     private readonly Dictionary<SFXType, AudioClip> sfxMap = new();
+    private readonly Dictionary<string, AudioClip> namedSfxMap = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<AudioClip> footstepClips = new();
+    private readonly List<AudioClip> bladeHitClips = new();
+    private readonly List<AudioClip> dashAttackHitClips = new();
+    private readonly List<AudioClip> boxHitClips = new();
+
+    public const string SfxWeaponSwing = "weapon-sound";
+    public const string SfxDash = "etc-sound-dash";
+    public const string SfxJump = "etc-sound-jump";
+    public const string SfxDashAttackStart = "beatt-sound-dashAttack";
+    public const string SfxSwordAreaAttack = "beatt-sound-SwordAreaAttack";
+    public const string SfxSlamShockwave = "beatt-sound-SlamShockwave";
+    public const string SfxRisingSlashStart = "beatt-sound2";
+    public const string SfxFocusMode = "focusMode";
+    public const string SfxGuard = "Guard";
+    public const string SfxBuffPickup = "buff_1";
 
     private AudioSource[] sfxSources;
     private int sfxIndex;
@@ -84,6 +99,11 @@ public class SoundManager : Singleton<SoundManager>
     private void LoadAllSFX()
     {
         sfxMap.Clear();
+        namedSfxMap.Clear();
+        bladeHitClips.Clear();
+        dashAttackHitClips.Clear();
+        boxHitClips.Clear();
+
         AudioClip[] clips = Resources.LoadAll<AudioClip>(SfxResourcePath);
 
         for (int i = 0; i < clips.Length; i++)
@@ -91,6 +111,8 @@ public class SoundManager : Singleton<SoundManager>
             AudioClip clip = clips[i];
             if (clip == null)
                 continue;
+
+            CacheNamedSFX(clip);
 
             if (Enum.TryParse(RemovePrefix(clip.name, "SFX_"), out SFXType type) && !sfxMap.ContainsKey(type))
                 sfxMap.Add(type, clip);
@@ -129,6 +151,57 @@ public class SoundManager : Singleton<SoundManager>
         GetNextSFXSource().PlayOneShot(clip, Mathf.Clamp01(volumeScale));
     }
 
+    public void PlayWeaponSwing(float volumeScale = 1f)
+    {
+        PlayNamedSFX(SfxWeaponSwing, SFXType.Attack, volumeScale);
+    }
+
+    public void PlayRandomBladeHit(float volumeScale = 1f)
+    {
+        if (bladeHitClips.Count == 0)
+        {
+            PlaySFX(SFXType.Hit, volumeScale);
+            return;
+        }
+
+        AudioClip clip = bladeHitClips[UnityEngine.Random.Range(0, bladeHitClips.Count)];
+        GetNextSFXSource().PlayOneShot(clip, Mathf.Clamp01(volumeScale));
+    }
+
+    public void PlayRandomDashAttackHit(float volumeScale = 1f)
+    {
+        if (dashAttackHitClips.Count == 0)
+        {
+            PlayRandomBladeHit(volumeScale);
+            return;
+        }
+
+        AudioClip clip = dashAttackHitClips[UnityEngine.Random.Range(0, dashAttackHitClips.Count)];
+        GetNextSFXSource().PlayOneShot(clip, Mathf.Clamp01(volumeScale));
+    }
+
+    public void PlayRandomBoxHit(float volumeScale = 1f)
+    {
+        if (boxHitClips.Count == 0)
+        {
+            PlaySFX(SFXType.Break, volumeScale);
+            return;
+        }
+
+        AudioClip clip = boxHitClips[UnityEngine.Random.Range(0, boxHitClips.Count)];
+        GetNextSFXSource().PlayOneShot(clip, Mathf.Clamp01(volumeScale));
+    }
+
+    public void PlayDash(float volumeScale = 1f)
+    {
+        PlayNamedSFX(SfxDash, SFXType.Dash, volumeScale);
+    }
+
+    public void PlayJump(float volumeScale = 1f)
+    {
+        PlayNamedSFX(SfxJump, SFXType.UI, volumeScale);
+    }
+
     public void PlayFootstep(float volumeScale = 0.5f)
     {
         if (footstepClips.Count == 0)
@@ -153,5 +226,47 @@ public class SoundManager : Singleton<SoundManager>
         return source.StartsWith(prefix, StringComparison.Ordinal)
             ? source.Substring(prefix.Length)
             : source;
+    }
+
+    // enum 이름으로 표현하기 어려운 하이픈 파일명 SFX를 직접 캐시한다.
+    private void CacheNamedSFX(AudioClip clip)
+    {
+        namedSfxMap[clip.name] = clip;
+        if (string.Equals(clip.name, SfxFocusMode, StringComparison.OrdinalIgnoreCase))
+            namedSfxMap["foucsMode"] = clip;
+
+        if (!string.Equals(clip.name, SfxDashAttackStart, StringComparison.OrdinalIgnoreCase) &&
+            clip.name.StartsWith("beatt-sound-dashAttack", StringComparison.OrdinalIgnoreCase))
+        {
+            dashAttackHitClips.Add(clip);
+            return;
+        }
+
+        if (string.Equals(clip.name, "beatt-sound1", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(clip.name, "beatt-sound2", StringComparison.OrdinalIgnoreCase))
+        {
+            bladeHitClips.Add(clip);
+            return;
+        }
+
+        if (clip.name.StartsWith("be-att-sound", StringComparison.OrdinalIgnoreCase))
+        {
+            boxHitClips.Add(clip);
+            return;
+        }
+
+    }
+
+    // 파일명이 enum 규칙을 따르지 않는 리소스는 이름으로 바로 재생한다.
+    // 해당 파일이 없으면 fallback enum 사운드로 빠져서 누락 리소스 때문에 기능이 멈추지 않게 한다.
+    public void PlayNamedSFX(string clipName, SFXType fallbackType, float volumeScale = 1f)
+    {
+        if (!string.IsNullOrWhiteSpace(clipName) && namedSfxMap.TryGetValue(clipName, out AudioClip clip) && clip != null)
+        {
+            GetNextSFXSource().PlayOneShot(clip, Mathf.Clamp01(volumeScale));
+            return;
+        }
+
+        PlaySFX(fallbackType, volumeScale);
     }
 }

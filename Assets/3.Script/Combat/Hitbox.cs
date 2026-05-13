@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ public class Hitbox : MonoBehaviour
     [SerializeField] private Collider2D hitCollider;
 
     private readonly HashSet<Health> hitTargets = new();
+    private Coroutine autoCloseRoutine;
 
     public event Action<Health> OnHit;
     public static event Action<Health, DamageInfo> OnAnyHit;
@@ -26,6 +28,18 @@ public class Hitbox : MonoBehaviour
         SetActive(false);
     }
 
+    private void OnDisable()
+    {
+        if (autoCloseRoutine != null)
+        {
+            StopCoroutine(autoCloseRoutine);
+            autoCloseRoutine = null;
+        }
+
+        SetActive(false);
+        hitTargets.Clear();
+    }
+
     // 공격 애니메이션 또는 전투 컨트롤러가 판정이 살아있는 짧은 시간 동안 호출한다.
     public void Open(Team team, AttackData data)
     {
@@ -33,12 +47,32 @@ public class Hitbox : MonoBehaviour
         attackData = data;
         hitTargets.Clear();
         SetActive(true);
+
+        if (autoCloseRoutine != null)
+            StopCoroutine(autoCloseRoutine);
+
+        float activeTime = data != null ? Mathf.Max(0.03f, data.activeTime + 0.04f) : 0.12f;
+        autoCloseRoutine = StartCoroutine(CoAutoClose(activeTime));
     }
 
     public void Close()
     {
+        if (autoCloseRoutine != null)
+        {
+            StopCoroutine(autoCloseRoutine);
+            autoCloseRoutine = null;
+        }
+
         SetActive(false);
         hitTargets.Clear();
+    }
+
+    // 애니메이션 이벤트 Close가 누락돼도 히트박스가 계속 켜져 몸박처럼 데미지를 주지 않게 막는다.
+    private IEnumerator CoAutoClose(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        autoCloseRoutine = null;
+        Close();
     }
 
     private void SetActive(bool active)

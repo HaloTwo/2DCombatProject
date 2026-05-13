@@ -30,6 +30,7 @@ public class BuffItem : MonoBehaviour
 
         consumed = true;
         Apply(other.gameObject, movement);
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxBuffPickup, SFXType.Buff);
         SpawnPickupEffect(transform.position);
 
         if (deactivateOnPickup)

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class RangedShooterEnemy : EnemyBrainBase
@@ -8,10 +9,22 @@ public class RangedShooterEnemy : EnemyBrainBase
     [SerializeField, KoreanLabel("유지 거리")] private float keepDistance = 4f;
     [SerializeField, KoreanLabel("발사 쿨타임")] private float fireCooldown = 1.25f;
     [SerializeField, KoreanLabel("공격 중 정지 시간")] private float attackMotionLockTime = 0.55f;
-    [SerializeField, KoreanLabel("포물선 조준 높이 보정")] private float arcTargetHeightOffset = 0.35f;
+    [SerializeField, KoreanLabel("포물선 목표 높이 보정")] private float arcTargetHeightOffset = -0.15f;
+    [SerializeField, KoreanLabel("연속 발사 수")] private int burstProjectileCount = 3;
+    [SerializeField, KoreanLabel("연속 발사 간격")] private float burstInterval = 0.12f;
+    [SerializeField, KoreanLabel("연속 발사 낙하 보정")] private float burstDropStep = 0.08f;
+
+    [SerializeField, KoreanLabel("원거리 추적 최대 높이 차이")] private float rangedChaseMaxHeightDifference = 2.4f;
 
     private float nextFireTime;
     private float attackLockedUntilTime;
+    private bool isFiringBurst;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        chaseMaxHeightDifference = Mathf.Max(chaseMaxHeightDifference, rangedChaseMaxHeightDifference);
+    }
 
     protected override void TickState()
     {
@@ -37,7 +50,7 @@ public class RangedShooterEnemy : EnemyBrainBase
         }
 
         float distanceX = Mathf.Abs(toTarget.x);
-        if (distanceX < keepDistance)
+        if (distanceX < keepDistance - 0.45f)
             MoveHorizontally(-Mathf.Sign(toTarget.x));
         else if (distanceX > keepDistance + 1f)
             MoveHorizontally(Mathf.Sign(toTarget.x));
@@ -78,12 +91,31 @@ public class RangedShooterEnemy : EnemyBrainBase
             animator.SetTrigger("Attack");
     }
 
-    // 원거리 공격 애니메이션의 던지는 프레임에서 호출한다.
+    // 공격 애니메이션 이벤트에서 호출된다. 한 번의 공격 모션으로 3발을 짧게 나눠 발사한다.
     public void FireProjectileByAnimationEvent()
     {
-        if (projectilePrefab == null || projectileAttackData == null)
+        if (projectilePrefab == null || projectileAttackData == null || isFiringBurst)
             return;
 
+        StartCoroutine(CoFireBurst());
+    }
+
+    private IEnumerator CoFireBurst()
+    {
+        isFiringBurst = true;
+        int count = Mathf.Max(1, burstProjectileCount);
+        for (int i = 0; i < count; i++)
+        {
+            FireSingleProjectile(i);
+            if (i < count - 1)
+                yield return new WaitForSeconds(ScaleEnemyDuration(burstInterval));
+        }
+
+        isFiringBurst = false;
+    }
+
+    private void FireSingleProjectile(int burstIndex)
+    {
         if (target != null)
             Face(target.position.x - transform.position.x);
 
@@ -96,7 +128,7 @@ public class RangedShooterEnemy : EnemyBrainBase
         if (go.TryGetComponent(out Projectile projectile))
         {
             Vector2 targetPosition = target != null
-                ? (Vector2)target.position + Vector2.up * arcTargetHeightOffset
+                ? (Vector2)target.position + Vector2.up * (arcTargetHeightOffset - burstDropStep * burstIndex)
                 : (Vector2)spawnPos + Vector2.right * facing * keepDistance;
 
             projectile.FireArc(Team.Enemy, targetPosition, projectileAttackData);

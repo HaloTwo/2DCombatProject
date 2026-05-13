@@ -625,7 +625,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   team: 1
-  maxHp: 24
+  maxHp: 35
   invincibleTime: 0.1
 --- !u!114 &4256327617166013751
 MonoBehaviour:
@@ -692,7 +692,7 @@ MonoBehaviour:
   health: {fileID: 2598734408876540747}
   animator: {fileID: 5050780339812704349}
   playerTag: Player
-  detectRange: 6
+  detectRange: 5
   attackRange: 0.48
   moveSpeed: 2.25
   patrolWhenIdle: 1
@@ -708,9 +708,11 @@ MonoBehaviour:
   groundCheckDistance: 0.7
   obstacleCheckDistance: 0.45
   targetHeightJumpThreshold: 0.55
+  chaseMaxHeightDifference: 1.1
   minPlatformJumpHeight: 1.1
   jumpCooldown: 0.65
   blockedStopTime: 0.2
+  chaseStopXDistance: 0.12
   attackHitbox: {fileID: 4088779821639909560}
   attackData: {fileID: 11400000, guid: 3a326ae70a3df6b48a17b3bc79222239, type: 2}
   attackCooldown: 0.9

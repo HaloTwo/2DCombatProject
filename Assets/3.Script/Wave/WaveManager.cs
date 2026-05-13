@@ -51,6 +51,7 @@ public class WaveManager : Singleton<WaveManager>
             WaveData wave = waves[currentWaveIndex];
             if (wave == null) continue;
 
+            RespawnBreakableObjects();
             currentWaveTotal = CountWaveEnemies(wave);
             currentWaveKilled = 0;
             WaveAnnounceUI.ShowWaveStartGlobal(currentWaveIndex, currentWaveTotal);
@@ -186,5 +187,13 @@ public class WaveManager : Singleton<WaveManager>
         }
 
         return total;
+    }
+
+    // 새 웨이브가 시작될 때 씬에 배치된 박스류 BreakableObject만 다시 켠다.
+    private void RespawnBreakableObjects()
+    {
+        BreakableObject[] breakables = FindObjectsByType<BreakableObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < breakables.Length; i++)
+            breakables[i]?.Respawn();
     }
 }

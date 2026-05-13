@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f902a67326789164ab3ad62a96ae4ef6, type: 3}
   m_Name: MushroomProjectileAttack
   m_EditorClassIdentifier: Assembly-CSharp::AttackData
-  damage: 8
+  damage: 5
   knockback: {x: 4, y: 1.5}
   hitStopTime: 0.035
   activeTime: 0.12

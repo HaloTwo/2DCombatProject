@@ -19,7 +19,4 @@ MonoBehaviour:
   - enemyPrefab: {fileID: 473343322696747890, guid: da0e61d4238e55d40b12aa663447c9c9, type: 3}
     count: 1
     interval: 0.25
-  - enemyPrefab: {fileID: 2266093475498161095, guid: e0f31213d8cc39d4099706d60e67c9be, type: 3}
-    count: 1
-    interval: 0.25
   nextWaveDelay: 1.2

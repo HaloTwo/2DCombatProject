@@ -29,6 +29,14 @@ public class FlyingMeleeEnemy : EnemyBrainBase
         // 콜라이더 크기/오프셋/트리거 여부는 프리팹 인스펙터에서 맞춘 값을 그대로 따른다.
     }
 
+    protected override bool CanChaseTarget()
+    {
+        if (target == null || rb == null)
+            return false;
+
+        return ((Vector2)target.position - rb.position).sqrMagnitude <= detectRange * detectRange;
+    }
+
     protected override void TickState()
     {
         if (target == null)

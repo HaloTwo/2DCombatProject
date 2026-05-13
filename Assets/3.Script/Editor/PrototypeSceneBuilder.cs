@@ -54,7 +54,7 @@ public static class PrototypeSceneBuilder
         GameObject enemyProjectilePrefab = CreateProjectilePrefab("EnemyProjectile", Color.magenta);
         GameObject parryEffectPrefab = CreateParryEffectPrefab();
         GameObject slashEffectPrefab = CreateSimpleEffectPrefab("SlashEffect", new Color(0.65f, 0.9f, 1f, 0.72f), new Vector3(1.25f, 0.22f, 1f), 0.18f);
-        GameObject risingEffectPrefab = CreateSimpleEffectPrefab("RisingSlashEffect", new Color(0.75f, 0.9f, 1f, 0.72f), new Vector3(0.48f, 1.15f, 1f), 0.22f);
+        GameObject risingEffectPrefab = CreateSimpleEffectPrefab("RisingSlashEffect", new Color(0.75f, 0.9f, 1f, 0.72f), new Vector3(0.48f, 1.15f, 1f), 0.7f);
         GameObject slamEffectPrefab = CreateSimpleEffectPrefab("SlamShockwaveEffect", new Color(1f, 0.72f, 0.25f, 0.78f), new Vector3(1.85f, 0.18f, 1f), 0.24f);
 
         SkillData skillDash = CreateSkillData("Skill_DashAttack", SkillType.DashAttack, dashAttack, 1.2f, 0.14f, 2.5f, 20f, null);
@@ -641,7 +641,7 @@ public static class PrototypeSceneBuilder
         if (name == "PlayerProjectile")
         {
             SerializedObject projectileSo = new SerializedObject(projectile);
-            projectileSo.FindProperty("speed").floatValue = 18f;
+            projectileSo.FindProperty("speed").floatValue = 10f;
             projectileSo.FindProperty("lifeTime").floatValue = 0.75f;
             projectileSo.ApplyModifiedPropertiesWithoutUndo();
         }

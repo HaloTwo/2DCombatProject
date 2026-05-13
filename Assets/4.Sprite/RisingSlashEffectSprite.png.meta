@@ -1,10 +1,49 @@
 fileFormatVersion: 2
-guid: 7319ff044247e5b408a8614c216ca37d
+guid: d9888bfbbccf05b4c8a9842428b501f6
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5699942587956156084
-    second: RisingSlashEffectSprite_0
+      213: 7193996819341425311
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_0
+  - first:
+      213: -6122796486511796893
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_1
+  - first:
+      213: -1068739139878652101
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_2
+  - first:
+      213: -8771784454478658765
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_3
+  - first:
+      213: -5295699474258738294
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_4
+  - first:
+      213: -5461858442819942929
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_5
+  - first:
+      213: 2522607176116076420
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_6
+  - first:
+      213: 5823609550337019535
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_7
+  - first:
+      213: 1453256039293961705
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_8
+  - first:
+      213: 4794298904200895916
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_9
+  - first:
+      213: 6933632751752720911
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_10
+  - first:
+      213: -1437067076665623830
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_11
+  - first:
+      213: 938646385529843175
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_12
+  - first:
+      213: -8443105972849809495
+    second: Gemini_Generated_Image_qfgwlgqfgwlgqfgw-Photoroom_13
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +76,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -46,12 +85,12 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 32
+  spritePixelsToUnits: 60
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -126,23 +165,133 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: RisingSlashEffectSprite_0
+      name: RisingSlashEffectSprite0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 32
-        height: 32
+        width: 296
+        height: 592
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4b65f3b85934a1f40800000000000000
-      internalID: 5699942587956156084
+      spriteID: f9ab224edf536d360800000000000000
+      internalID: 7193996819341425311
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RisingSlashEffectSprite1
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 0
+        width: 296
+        height: 592
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36d54751905770ba0800000000000000
+      internalID: -6122796486511796893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RisingSlashEffectSprite2
+      rect:
+        serializedVersion: 2
+        x: 592
+        y: 0
+        width: 296
+        height: 592
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b37f9f92a631b21f0800000000000000
+      internalID: -1068739139878652101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RisingSlashEffectSprite3
+      rect:
+        serializedVersion: 2
+        x: 922
+        y: 0
+        width: 296
+        height: 592
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3338188738c544680800000000000000
+      internalID: -8771784454478658765
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RisingSlashEffectSprite4
+      rect:
+        serializedVersion: 2
+        x: 1243
+        y: 0
+        width: 296
+        height: 592
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a83c59fc265e186b0800000000000000
+      internalID: -5295699474258738294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RisingSlashEffectSprite5
+      rect:
+        serializedVersion: 2
+        x: 1539
+        y: 0
+        width: 237
+        height: 592
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe5cf363fa49334b0800000000000000
+      internalID: -5461858442819942929
       vertices: []
       indices: 
       edges: []
@@ -151,7 +300,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: 71cd767f638151247a17ca9e53444562
     internalID: 0
     vertices: []
     indices: 
@@ -159,9 +308,16 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":296.0,"y":592.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      RisingSlashEffectSprite_0: 5699942587956156084
+      RisingSlashEffectSprite0: 7193996819341425311
+      RisingSlashEffectSprite1: -6122796486511796893
+      RisingSlashEffectSprite2: -1068739139878652101
+      RisingSlashEffectSprite3: -8771784454478658765
+      RisingSlashEffectSprite4: -5295699474258738294
+      RisingSlashEffectSprite5: -5461858442819942929
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

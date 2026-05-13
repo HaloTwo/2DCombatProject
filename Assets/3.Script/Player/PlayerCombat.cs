@@ -19,6 +19,8 @@ public class PlayerCombat : MonoBehaviour
     [SerializeField, KoreanLabel("2타 전진 속도")] private float attack2StepSpeed = 3.3f;
     [SerializeField, KoreanLabel("전진 지속 시간")] private float attackStepDuration = 0.08f;
 
+    [SerializeField, KoreanLabel("애니메이터 브릿지")] private PlayerHeroKnightAnimator heroAnimator;
+
     private bool isAttacking;
     private bool isWaitingComboInput;
     private int basicAttackStep;
@@ -27,15 +29,20 @@ public class PlayerCombat : MonoBehaviour
 
     private void Reset()
     {
-        input = GetComponent<PlayerInputReader>();
-        movement = GetComponent<PlayerMovement2D>();
+        input = GetComponentInParent<PlayerInputReader>();
+        movement = GetComponentInParent<PlayerMovement2D>();
         animator = GetComponentInChildren<Animator>();
+        heroAnimator = GetComponentInParent<PlayerHeroKnightAnimator>();
+        if (heroAnimator == null) heroAnimator = GetComponentInChildren<PlayerHeroKnightAnimator>();
     }
 
     private void Awake()
     {
-        if (input == null) input = GetComponent<PlayerInputReader>();
-        if (movement == null) movement = GetComponent<PlayerMovement2D>();
+        if (input == null) input = GetComponentInParent<PlayerInputReader>();
+        if (movement == null) movement = GetComponentInParent<PlayerMovement2D>();
+        if (animator == null) animator = GetComponentInChildren<Animator>();
+        if (heroAnimator == null) heroAnimator = GetComponentInParent<PlayerHeroKnightAnimator>();
+        if (heroAnimator == null) heroAnimator = GetComponentInChildren<PlayerHeroKnightAnimator>();
     }
 
     private void OnEnable()
@@ -52,25 +59,33 @@ public class PlayerCombat : MonoBehaviour
 
     private void Update()
     {
-        if (movement != null && movement.IsInputLocked)
-            return;
-
         if (input != null && input.AttackPressed)
+        {
             TryBasicAttack();
+            return;
+        }
+
+        if (movement != null && movement.IsInputLocked && !isWaitingComboInput)
+            return;
     }
 
     // 기본 공격은 짧은 판정 시간만 열고 닫아서 빠른 전투 템포를 만든다.
     public void TryBasicAttack()
     {
-        if (isAttacking || basicAttack == null || basicAttackHitbox == null)
+        if (basicAttack == null || basicAttackHitbox == null)
             return;
 
-        if (movement != null && movement.IsInputLocked)
+        if (isAttacking)
             return;
 
         if (!isWaitingComboInput)
             basicAttackStep = 0;
 
+        StartBasicAttack();
+    }
+
+    private void StartBasicAttack()
+    {
         isWaitingComboInput = false;
         comboVersion++;
         StartCoroutine(CoBasicAttack());
@@ -87,10 +102,9 @@ public class PlayerCombat : MonoBehaviour
 
         movement?.LockMovementFor(attackMoveLockTime);
 
-        if (animator != null)
-            animator.SetTrigger(attackTrigger);
+        PlayAttackAnimation(attackTrigger);
 
-        SoundManager.Instance?.PlaySFX(SFXType.Attack);
+        SoundManager.Instance?.PlayWeaponSwing();
 
         if (useAnimationEventHitTiming)
         {
@@ -140,7 +154,21 @@ public class PlayerCombat : MonoBehaviour
 
     private void HandleBasicAttackHit(Health target)
     {
+        if (target == null || target.GetComponent<BreakableObject>() == null)
+            SoundManager.Instance?.PlayRandomBladeHit();
+
         movement?.StopAttackStep();
+    }
+
+    private void PlayAttackAnimation(string attackTrigger)
+    {
+        if (animator == null)
+            return;
+
+        animator.ResetTrigger("Attack1");
+        animator.ResetTrigger("Attack2");
+        heroAnimator?.HoldAttackMotion(attackMotionTime);
+        animator.SetTrigger(attackTrigger);
     }
 
     public void OpenAttackHitbox()

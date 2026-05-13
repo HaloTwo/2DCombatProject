@@ -15,11 +15,13 @@ public class PlayerGuard : MonoBehaviour
     [SerializeField] private float guardDamageRate = 0.25f;
     [SerializeField] private float parryHitStop = 0.07f;
     [SerializeField] private float parryKnockback = 9f;
+    [SerializeField, KoreanLabel("패링 시작 정지 시간")] private float parryStartLockTime = 0.12f;
+    [SerializeField, KoreanLabel("패링 성공 정지 시간")] private float parrySuccessLockTime = 0.16f;
 
     private float parryEndTime;
     private Coroutine hitStopRoutine;
 
-    public bool IsGuarding => input != null && !IsInputLocked() && input.BlockHeld;
+    public bool IsGuarding => input != null && input.BlockHeld && (!IsInputLocked() || Time.time <= parryEndTime);
     public bool IsParryWindow => IsGuarding && Time.time <= parryEndTime;
 
     private void Reset()
@@ -48,6 +50,8 @@ public class PlayerGuard : MonoBehaviour
     private void OpenParryWindow()
     {
         parryEndTime = Time.time + parryWindow;
+        movement?.LockMovementFor(parryStartLockTime);
+
         if (animator != null)
             animator.SetTrigger(guardTriggerName);
     }
@@ -64,6 +68,7 @@ public class PlayerGuard : MonoBehaviour
             direction = transform.localScale.x >= 0f ? Vector2.right : Vector2.left;
 
         SpawnParryEffect(point);
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxGuard, SFXType.Guard);
         CameraShake.ShakeDefault();
         StartParryHitStop();
 
@@ -72,6 +77,8 @@ public class PlayerGuard : MonoBehaviour
 
         if (rb != null)
             rb.linearVelocity = new Vector2(-direction.x * Mathf.Max(1.5f, parryKnockback * 0.16f), rb.linearVelocity.y);
+
+        movement?.LockMovementFor(parrySuccessLockTime);
 
         parryEndTime = -999f;
         return true;

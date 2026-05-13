@@ -48,6 +48,7 @@ public enum BuffPickupType
 
 public enum BGMType
 {
+    MainBGM,
     Menu,
     Combat,
     Focus

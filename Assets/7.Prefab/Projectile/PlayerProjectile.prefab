@@ -142,14 +142,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49f0e35c45b511843b42fa1c16001192, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
-  speed: 18
-  lifeTime: 0.75
+  speed: 7.5
+  lifeTime: 1
   keepHorizontalSlash: 1
   releaseOnTerrainHit: 1
   arcGravity: 22
   minArcFlightTime: 0.55
   maxArcFlightTime: 1.1
-  playerMaxDistance: 3
+  playerMaxDistance: 3.5
   impactEffectPrefab: {fileID: 8690950337773083281, guid: 35cd0cf6ccb95bf409e9287153930e5b, type: 3}
 --- !u!95 &6874512215812020042
 Animator:

@@ -53,6 +53,10 @@ public class PlayerSkillController : MonoBehaviour
     [SerializeField, KoreanLabel("대시공격 경로 판정 높이")] private float dashAttackPathHeight = 1.15f;
     [SerializeField, KoreanLabel("대시공격 경로 여유 폭")] private float dashAttackPathPadding = 0.75f;
 
+    [SerializeField, KoreanLabel("대쉬공격 연속 타격 간격")] private float dashAttackHitInterval = 0.045f;
+    [SerializeField, KoreanLabel("대쉬공격 마무리 슬로우 시간")] private float dashAttackFinishSlowDuration = 0.08f;
+    [SerializeField, KoreanLabel("대쉬공격 마무리 슬로우 배율")] private float dashAttackFinishSlowMultiplier = 0.25f;
+
     [Header("Rising Slash")]
     [SerializeField, KoreanLabel("공중공격 판정 크기")] private Vector2 risingSlashAreaSize = new Vector2(2.1f, 1.5f);
     [SerializeField, KoreanLabel("공중공격 판정 위치")] private Vector2 risingSlashAreaOffset = new Vector2(0.85f, 0.45f);
@@ -75,6 +79,7 @@ public class PlayerSkillController : MonoBehaviour
     private float risingSlashEventValidUntil;
     private bool risingSlashHit1Triggered;
     private bool risingSlashHit2Triggered;
+    private readonly List<DashAttackHitCandidate> dashAttackCandidates = new();
 
     public SkillData SkillOne => skillOne;
     public SkillData SkillTwo => skillTwo;
@@ -233,7 +238,7 @@ public class PlayerSkillController : MonoBehaviour
         yield return new WaitForSeconds(skill.duration);
 
         Vector2 endPosition = rb != null ? rb.position : (Vector2)transform.position;
-        ApplyDashAttackPathDamage(skill, startPosition, endPosition, facing);
+        yield return CoApplyDashAttackPathDamage(skill, startPosition, endPosition, facing);
         isUsingSkill = false;
     }
 
@@ -251,6 +256,7 @@ public class PlayerSkillController : MonoBehaviour
         risingSlashHit2Triggered = false;
         movement?.LockMovementFor(skill.duration + skillInputLockPadding);
         PlaySkillShake(skillShakeDuration, skillShakePower);
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxRisingSlashStart, SFXType.Skill);
         SpawnEffect(risingEffectPrefab, transform.position + new Vector3(facing * 0.55f, 0.4f, 0f), new Vector3(facing, 1f, 1f));
 
         if (rb != null)
@@ -279,6 +285,7 @@ public class PlayerSkillController : MonoBehaviour
         if (rb != null)
         {
             rb.linearVelocity = new Vector2(0f, Mathf.Abs(groundSlamJumpPower));
+            SoundManager.Instance?.PlayJump();
             yield return new WaitForSeconds(Mathf.Max(0f, groundSlamDiveDelay));
             rb.linearVelocity = new Vector2(0f, -Mathf.Abs(skill.force));
         }
@@ -295,6 +302,7 @@ public class PlayerSkillController : MonoBehaviour
 
         SpawnEffect(slamEffectPrefab, slamCenter, slamEffectScale);
         SpawnEffect(slamDustPrefab, slamCenter, Vector3.one);
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxSlamShockwave, SFXType.Slam);
         ApplyGroundSlamArea(skill, slamCenter);
 
         PlaySkillShake(groundSlamShakeDuration, groundSlamShakePower);
@@ -417,6 +425,7 @@ public class PlayerSkillController : MonoBehaviour
 
             damagedTargets.Add(targetHealth);
             hitAny = true;
+            SoundManager.Instance?.PlayRandomBladeHit();
             SpawnHitFlash(hitPoint);
 
             if (targetHealth.TryGetComponent(out EnemyBrainBase enemyBrain))
@@ -435,15 +444,16 @@ public class PlayerSkillController : MonoBehaviour
 
     // 대시공격은 빠르게 지나가는 동안의 경로 전체를 한 번 훑는다.
     // 히트박스 프레임을 놓쳐도 지나간 몬스터에게는 한 번만 데미지가 들어가게 한다.
-    private void ApplyDashAttackPathDamage(SkillData skill, Vector2 start, Vector2 end, float facing)
+    private IEnumerator CoApplyDashAttackPathDamage(SkillData skill, Vector2 start, Vector2 end, float facing)
     {
         if (skill == null || skill.attackData == null)
-            return;
+            yield break;
 
         float width = Mathf.Max(0.75f, Mathf.Abs(end.x - start.x) + dashAttackPathPadding);
         Vector2 center = (start + end) * 0.5f + Vector2.right * facing * 0.25f;
         Collider2D[] hits = Physics2D.OverlapBoxAll(center, new Vector2(width, dashAttackPathHeight), 0f);
         HashSet<Health> damagedTargets = new();
+        dashAttackCandidates.Clear();
         bool hitAny = false;
 
         for (int i = 0; i < hits.Length; i++)
@@ -456,25 +466,43 @@ public class PlayerSkillController : MonoBehaviour
             if (targetHealth.Team == Team.Player || damagedTargets.Contains(targetHealth))
                 continue;
 
+            damagedTargets.Add(targetHealth);
+            float order = hit.bounds.center.x * facing;
+            dashAttackCandidates.Add(new DashAttackHitCandidate(hit, hurtbox, targetHealth, order));
+        }
+
+        dashAttackCandidates.Sort((a, b) => a.Order.CompareTo(b.Order));
+
+        for (int i = 0; i < dashAttackCandidates.Count; i++)
+        {
+            DashAttackHitCandidate candidate = dashAttackCandidates[i];
+            if (candidate.Hurtbox == null || candidate.Health == null)
+                continue;
+
+            Collider2D hit = candidate.Collider;
             Vector2 hitPoint = hit.ClosestPoint(center);
             Vector2 knockback = new Vector2(Mathf.Abs(skill.attackData.knockback.x) * facing, skill.attackData.knockback.y);
             float damage = PlayerDamageBuff.ModifyPlayerDamage(skill.attackData.damage);
             DamageInfo info = new DamageInfo(Team.Player, damage, hitPoint, knockback, skill.attackData.hitStopTime);
 
-            if (!hurtbox.ApplyDamage(info, this))
+            if (!candidate.Hurtbox.ApplyDamage(info, this))
                 continue;
 
-            damagedTargets.Add(targetHealth);
             hitAny = true;
+            SoundManager.Instance?.PlayRandomDashAttackHit();
             SpawnHitFlash(hitPoint);
 
-            if (targetHealth.TryGetComponent(out EnemyBrainBase enemyBrain))
+            if (candidate.Health.TryGetComponent(out EnemyBrainBase enemyBrain))
                 enemyBrain.ApplyFocusBurstKnockback(Vector2.right * facing, Mathf.Abs(knockback.x), knockback.y, 0.1f);
+
+            if (i < dashAttackCandidates.Count - 1)
+                yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, dashAttackHitInterval));
         }
 
         if (!hitAny)
-            return;
+            yield break;
 
+        FocusModeController.PlayBriefPreviewSlow(dashAttackFinishSlowDuration, dashAttackFinishSlowMultiplier, dashAttackFinishSlowMultiplier);
         GlobalHitStop.Play(skill.attackData.hitStopTime);
         PlaySkillShake(skillShakeDuration * 1.2f, skillShakePower * 1.2f);
     }
@@ -492,6 +520,7 @@ public class PlayerSkillController : MonoBehaviour
 
         yield return new WaitForSeconds(projectileStartupDelay);
 
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxSwordAreaAttack, SFXType.Projectile);
         FireProjectile(skill);
         PlaySkillShake(skillShakeDuration, skillShakePower);
 
@@ -553,11 +582,18 @@ public class PlayerSkillController : MonoBehaviour
         if (SoundManager.Instance == null || skill == null)
             return;
 
+        if (skill.skillType == SkillType.DashAttack)
+        {
+            SoundManager.Instance.PlayNamedSFX(SoundManager.SfxDashAttackStart, SFXType.Dash);
+            return;
+        }
+
+        if (skill.skillType == SkillType.GroundSlam || skill.skillType == SkillType.Projectile)
+            return;
+
         SFXType sfxType = skill.skillType switch
         {
-            SkillType.DashAttack => SFXType.Dash,
             SkillType.Projectile => SFXType.Projectile,
-            SkillType.GroundSlam => SFXType.Slam,
             _ => SFXType.Skill
         };
 
@@ -567,6 +603,22 @@ public class PlayerSkillController : MonoBehaviour
     private Vector3 GetGroundSlamCenter()
     {
         return transform.position + new Vector3(0f, -0.45f, 0f);
+    }
+
+    private readonly struct DashAttackHitCandidate
+    {
+        public readonly Collider2D Collider;
+        public readonly Hurtbox Hurtbox;
+        public readonly Health Health;
+        public readonly float Order;
+
+        public DashAttackHitCandidate(Collider2D collider, Hurtbox hurtbox, Health health, float order)
+        {
+            Collider = collider;
+            Hurtbox = hurtbox;
+            Health = health;
+            Order = order;
+        }
     }
 
     private void OnDrawGizmosSelected()

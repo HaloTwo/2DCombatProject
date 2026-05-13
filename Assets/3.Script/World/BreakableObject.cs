@@ -27,14 +27,28 @@ public class BreakableObject : MonoBehaviour
     private void OnEnable()
     {
         broken = false;
+        health?.ResetHealth();
         if (health != null)
+        {
+            health.OnDamaged += HandleDamaged;
             health.OnDead += HandleDead;
+        }
     }
 
     private void OnDisable()
     {
         if (health != null)
+        {
+            health.OnDamaged -= HandleDamaged;
             health.OnDead -= HandleDead;
+        }
+    }
+
+    // 박스가 실제로 공격을 받았을 때 전용 타격음을 낸다.
+    private void HandleDamaged(Health damaged, DamageInfo info)
+    {
+        if (!broken)
+            SoundManager.Instance?.PlayRandomBoxHit();
     }
 
     // Health가 0이 되는 순간 월드 오브젝트 반응을 한 곳에서 처리한다.
@@ -81,5 +95,16 @@ public class BreakableObject : MonoBehaviour
             autoRelease.Play();
 
         return go;
+    }
+
+    // 웨이브/스테이지가 바뀔 때 박스만 다시 살린다. 드랍/이펙트는 건드리지 않고 원래 오브젝트만 초기화한다.
+    public void Respawn()
+    {
+        broken = false;
+        gameObject.SetActive(true);
+        if (health == null)
+            health = GetComponent<Health>();
+
+        health?.ResetHealth();
     }
 }
