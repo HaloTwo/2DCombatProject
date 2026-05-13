@@ -9,7 +9,8 @@ public class WaveManager : Singleton<WaveManager>
     [SerializeField] private List<EnemySpawnPoint> spawnPoints = new();
     [SerializeField] private float waveIntroTime = 1f;
     [SerializeField] private float waveClearHoldTime = 1f;
-    [SerializeField] private int countdownStart = 3;
+    [SerializeField] private int countdownStart = 5;
+    [SerializeField, KoreanLabel("첫 웨이브 카운트다운")] private int firstWaveCountdownStart = 15;
 
     private readonly List<Health> aliveEnemies = new();
     private int currentWaveIndex = -1;
@@ -54,23 +55,30 @@ public class WaveManager : Singleton<WaveManager>
             RespawnBreakableObjects();
             currentWaveTotal = CountWaveEnemies(wave);
             currentWaveKilled = 0;
+
             if (wave.isBossWave)
                 WaveAnnounceUI.ShowBossWaveStartGlobal(currentWaveIndex, currentWaveTotal, wave.bossName);
             else
                 WaveAnnounceUI.ShowWaveStartGlobal(currentWaveIndex, currentWaveTotal);
+
             yield return new WaitForSecondsRealtime(waveIntroTime);
 
-            for (int count = countdownStart; count > 0; count--)
+            int currentCountdownStart = GetCountdownStart();
+
+            for (int count = currentCountdownStart; count > 0; count--)
             {
                 WaveAnnounceUI.ShowCountdownGlobal(count, currentWaveIndex);
                 yield return new WaitForSecondsRealtime(1f);
             }
 
             WaveAnnounceUI.ShowWaveProgressGlobal(currentWaveIndex, currentWaveKilled, currentWaveTotal);
+
             yield return StartCoroutine(CoSpawnWave(wave));
             yield return new WaitUntil(() => aliveEnemies.Count == 0);
+
             OnWaveCleared?.Invoke(currentWaveIndex);
             WaveAnnounceUI.ShowWaveClearGlobal(currentWaveIndex);
+
             yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, waveClearHoldTime));
         }
 
@@ -99,6 +107,7 @@ public class WaveManager : Singleton<WaveManager>
     private void SpawnEnemy(GameObject prefab)
     {
         Vector3 pos = GetSpawnPosition();
+
         GameObject go = ObjectPool.Instance != null
             ? ObjectPool.Instance.Get(prefab, pos, Quaternion.identity)
             : Instantiate(prefab, pos, Quaternion.identity);
@@ -125,6 +134,7 @@ public class WaveManager : Singleton<WaveManager>
     {
         enemy.OnDead -= HandleEnemyDead;
         aliveEnemies.Remove(enemy);
+
         currentWaveKilled = Mathf.Clamp(currentWaveKilled + 1, 0, currentWaveTotal);
         WaveAnnounceUI.ShowWaveProgressGlobal(currentWaveIndex, currentWaveKilled, currentWaveTotal);
     }
@@ -156,6 +166,7 @@ public class WaveManager : Singleton<WaveManager>
                 continue;
 
             GameObject enemyObject = enemy.gameObject;
+
             if (ObjectPool.Instance != null && enemyObject.GetComponent<PooledObjectTag>() != null)
                 ObjectPool.Instance.Release(enemyObject);
             else
@@ -177,12 +188,14 @@ public class WaveManager : Singleton<WaveManager>
     private int CountWaveEnemies(WaveData wave)
     {
         int total = 0;
+
         if (wave == null)
             return total;
 
         for (int i = 0; i < wave.enemies.Count; i++)
         {
             WaveData.SpawnEntry entry = wave.enemies[i];
+
             if (entry == null || entry.enemyPrefab == null)
                 continue;
 
@@ -192,10 +205,17 @@ public class WaveManager : Singleton<WaveManager>
         return total;
     }
 
+    // 첫 웨이브는 플레이어가 조작과 UI를 확인할 시간을 주기 위해 더 길게 대기한다.
+    private int GetCountdownStart()
+    {
+        return currentWaveIndex == 0 ? firstWaveCountdownStart : countdownStart;
+    }
+
     // 새 웨이브가 시작될 때 씬에 배치된 박스류 BreakableObject만 다시 켠다.
     private void RespawnBreakableObjects()
     {
         BreakableObject[] breakables = FindObjectsByType<BreakableObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
         for (int i = 0; i < breakables.Length; i++)
             breakables[i]?.Respawn();
     }

@@ -3550,7 +3550,8 @@ MonoBehaviour:
   - {fileID: 1904579819}
   waveIntroTime: 1
   waveClearHoldTime: 1
-  countdownStart: 5
+  countdownStart: 3
+  firstWaveCountdownStart: 15
 --- !u!114 &1133915787
 MonoBehaviour:
   m_ObjectHideFlags: 0

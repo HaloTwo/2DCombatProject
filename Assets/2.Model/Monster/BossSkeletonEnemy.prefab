@@ -64,26 +64,6 @@ PrefabInstance:
       propertyPath: meleeEnemy
       value: 
       objectReference: {fileID: 4284421144412835042}
-    - target: {fileID: 7524733907689838796, guid: c587bd1c8ab14954a895ea8fc2fd8930, type: 3}
-      propertyPath: m_Size.x
-      value: 1.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7524733907689838796, guid: c587bd1c8ab14954a895ea8fc2fd8930, type: 3}
-      propertyPath: m_Size.y
-      value: 0.75
-      objectReference: {fileID: 0}
-    - target: {fileID: 7524733907689838796, guid: c587bd1c8ab14954a895ea8fc2fd8930, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7524733907689838796, guid: c587bd1c8ab14954a895ea8fc2fd8930, type: 3}
-      propertyPath: m_Offset.x
-      value: 0.12
-      objectReference: {fileID: 0}
-    - target: {fileID: 7524733907689838796, guid: c587bd1c8ab14954a895ea8fc2fd8930, type: 3}
-      propertyPath: m_Offset.y
-      value: 0.02
-      objectReference: {fileID: 0}
     - target: {fileID: 7859378542947815043, guid: c587bd1c8ab14954a895ea8fc2fd8930, type: 3}
       propertyPath: m_Controller
       value: 

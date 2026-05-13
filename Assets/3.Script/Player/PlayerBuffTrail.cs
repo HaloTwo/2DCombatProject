@@ -15,11 +15,12 @@ public class PlayerBuffTrail : MonoBehaviour
 
     private void Awake()
     {
-        if (sourceRenderer == null)
-        {
-            PlayerMovement2D movement = GetComponent<PlayerMovement2D>();
-            sourceRenderer = movement != null ? movement.VisualRenderer : GetComponentInChildren<SpriteRenderer>();
-        }
+        CacheRenderer();
+    }
+
+    private void OnDisable()
+    {
+        RestoreColor();
     }
 
     // 이동속도 버프가 켜져 있는 동안 대시처럼 플레이어 뒤에 잔상을 남긴다.
@@ -28,11 +29,7 @@ public class PlayerBuffTrail : MonoBehaviour
         if (duration <= 0f)
             return;
 
-        if (sourceRenderer == null)
-        {
-            PlayerMovement2D movement = GetComponent<PlayerMovement2D>();
-            sourceRenderer = movement != null ? movement.VisualRenderer : GetComponentInChildren<SpriteRenderer>();
-        }
+        CacheRenderer();
 
         if (sourceRenderer == null)
             return;
@@ -49,17 +46,16 @@ public class PlayerBuffTrail : MonoBehaviour
         if (duration <= 0f)
             return;
 
-        if (sourceRenderer == null)
-        {
-            PlayerMovement2D movement = GetComponent<PlayerMovement2D>();
-            sourceRenderer = movement != null ? movement.VisualRenderer : GetComponentInChildren<SpriteRenderer>();
-        }
+        CacheRenderer();
 
         if (sourceRenderer == null)
             return;
 
         if (powerRoutine != null)
+        {
             StopCoroutine(powerRoutine);
+            RestoreColor();
+        }
 
         powerRoutine = StartCoroutine(CoPowerAura(duration));
     }
@@ -79,8 +75,9 @@ public class PlayerBuffTrail : MonoBehaviour
 
     private IEnumerator CoPowerAura(float duration)
     {
-        Color cachedOrigin = sourceRenderer.color;
-        sourceRenderer.color = Color.Lerp(cachedOrigin, powerTintColor, 0.45f);
+        if (sourceRenderer != null)
+            sourceRenderer.color = Color.Lerp(Color.white, powerTintColor, 0.45f);
+
         float endTime = Time.time + duration;
 
         while (Time.time < endTime)
@@ -89,14 +86,15 @@ public class PlayerBuffTrail : MonoBehaviour
             yield return new WaitForSeconds(spawnInterval * 1.4f);
         }
 
-        if (sourceRenderer != null)
-            sourceRenderer.color = cachedOrigin;
-
+        RestoreColor();
         powerRoutine = null;
     }
 
     private void SpawnGhost(Color color)
     {
+        if (sourceRenderer == null)
+            return;
+
         GameObject ghost = new GameObject("BuffTrail");
         ghost.transform.position = sourceRenderer.transform.position;
         ghost.transform.rotation = sourceRenderer.transform.rotation;
@@ -125,12 +123,30 @@ public class PlayerBuffTrail : MonoBehaviour
         {
             time += Time.deltaTime;
             float t = Mathf.Clamp01(time / fadeTime);
+
             Color color = startColor;
             color.a = Mathf.Lerp(startColor.a, 0f, t);
             ghostRenderer.color = color;
+
             yield return null;
         }
 
-        Destroy(ghostRenderer.gameObject);
+        if (ghostRenderer != null)
+            Destroy(ghostRenderer.gameObject);
+    }
+
+    private void CacheRenderer()
+    {
+        if (sourceRenderer != null)
+            return;
+
+        PlayerMovement2D movement = GetComponent<PlayerMovement2D>();
+        sourceRenderer = movement != null ? movement.VisualRenderer : GetComponentInChildren<SpriteRenderer>();
+    }
+
+    private void RestoreColor()
+    {
+        if (sourceRenderer != null)
+            sourceRenderer.color = Color.white;
     }
 }

@@ -20,6 +20,10 @@ PrefabInstance:
       propertyPath: patrolTurnCooldown
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 3900153873496526285, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.119
+      objectReference: {fileID: 0}
     - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -63,6 +67,14 @@ PrefabInstance:
     - target: {fileID: 7439954532678875669, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
       propertyPath: m_Name
       value: SkeletonEnemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 8150058588678732490, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_Size.x
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8150058588678732490, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8387379952187272325, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
       propertyPath: m_Controller

@@ -103,6 +103,8 @@ public class HUDView : Singleton<HUDView>
             return;
 
         playerHealth.OnDamaged += HandlePlayerDamaged;
+        playerHealth.OnChanged += HandlePlayerHealthChanged;
+
         subscribedPlayerHealth = true;
     }
 
@@ -112,7 +114,14 @@ public class HUDView : Singleton<HUDView>
             return;
 
         playerHealth.OnDamaged -= HandlePlayerDamaged;
+        playerHealth.OnChanged -= HandlePlayerHealthChanged;
+
         subscribedPlayerHealth = false;
+    }
+
+    private void HandlePlayerHealthChanged(Health health)
+    {
+        RefreshHp();
     }
 
     private void Update()

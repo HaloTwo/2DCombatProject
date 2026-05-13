@@ -464,7 +464,7 @@ MonoBehaviour:
   attackData: {fileID: 11400000, guid: 28a07ab55dac1dd40a1f1d7d171a0e70, type: 2}
   attackCooldown: 1
   attackStateDuration: 0.55
-  attackStartXPadding: 0.28
+  attackStartXPadding: 0.2
   attackStartYTolerance: 0.85
 --- !u!1 &8325373796006418117
 GameObject:
