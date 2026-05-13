@@ -31,7 +31,10 @@ public class SoundManager : Singleton<SoundManager>
     public const string SfxRisingSlashStart = "beatt-sound2";
     public const string SfxFocusMode = "focusMode";
     public const string SfxGuard = "Guard";
+    public const string SfxGuardParry = "Guard1";
+    public const string SfxGuardBlock = "Guard2";
     public const string SfxBuffPickup = "buff_1";
+    public const string SfxPlayerHit = "hitting";
 
     private AudioSource[] sfxSources;
     private int sfxIndex;

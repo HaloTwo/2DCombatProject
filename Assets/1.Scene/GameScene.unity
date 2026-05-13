@@ -3575,6 +3575,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   state: 1
+  gameBgm: 0
+  playBgmOnStart: 1
   gameOverSlowScale: 0.25
   gameOverSlowDuration: 2
   minGameOverPresentationTime: 3
@@ -3624,11 +3626,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WaveManager
   waves:
+  - {fileID: 11400000, guid: ebf1f68edaabc2741b932f840e47fd2b, type: 2}
   - {fileID: 11400000, guid: b8c9d0e232dc8734d8a7ce1780133acf, type: 2}
   - {fileID: 11400000, guid: 73c2b6d80d3e46f46aa9192d942ff3e8, type: 2}
   - {fileID: 11400000, guid: ad0525d2c0c01784cbc2a383bd84a8e5, type: 2}
   - {fileID: 11400000, guid: 2ec98214016775947997ff08bdb9cd5d, type: 2}
-  - {fileID: 11400000, guid: ebf1f68edaabc2741b932f840e47fd2b, type: 2}
   spawnPoints:
   - {fileID: 405905255}
   - {fileID: 1162768866}

@@ -212,7 +212,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hurtbox
   health: {fileID: 2655619090673079263}
-  guard: {fileID: 0}
+  guard: {fileID: 1013361786693013830}
 --- !u!114 &4745650321542300253
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -226,6 +226,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInputReader
   doubleTapDashWindow: 0.25
+  health: {fileID: 2655619090673079263}
 --- !u!114 &4530850618612268224
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -240,7 +241,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement2D
   input: {fileID: 4745650321542300253}
   rb: {fileID: 8945240710127607946}
-  health: {fileID: 0}
+  health: {fileID: 2655619090673079263}
   groundCheck: {fileID: 5789298289719220089}
   groundMask:
     serializedVersion: 2
@@ -264,6 +265,8 @@ MonoBehaviour:
   platformDropVelocity: -3.5
   hitStunDuration: 0.18
   damageInvincibleDuration: 0.65
+  footstepInterval: 0.18
+  footstepMoveThreshold: 0.1
   enemyCollisionIgnoreRadius: 12
   enemyCollisionIgnoreInterval: 0.12
 --- !u!114 &1013361786693013830
@@ -283,9 +286,9 @@ MonoBehaviour:
   rb: {fileID: 8945240710127607946}
   animator: {fileID: 2260845058193702356}
   parryEffectPrefab: {fileID: 7727036360660970297, guid: bf1e9cdabf8b59841890ef8929e9f93f, type: 3}
-  guardTriggerName: Hurt
+  guardFallbackTriggerName: Block
   parryWindow: 0.16
-  guardDamageRate: 0.25
+  guardDamageRate: 0.5
   parryHitStop: 0.07
   parryKnockback: 9
   parryStartLockTime: 0.12
@@ -344,8 +347,6 @@ MonoBehaviour:
   movement: {fileID: 4530850618612268224}
   rb: {fileID: 8945240710127607946}
   health: {fileID: 2655619090673079263}
-  useNoBloodDeath: 0
-  damagedTriggerName: Block
   dashGhostColor: {r: 0.55, g: 0.85, b: 1, a: 0.48}
   dashGhostInterval: 0.035
   dashGhostLifeTime: 0.22

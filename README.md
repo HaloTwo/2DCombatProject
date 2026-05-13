@@ -271,7 +271,8 @@ Wave Start
   -> 전부 처치
   -> Wave Clear
   -> 다음 웨이브
-  -> 마지막 웨이브 이후 Clear
+  -> 마지막 웨이브는 Boss Wave 연출
+  -> 보스 처치 이후 Clear
 ```
 
 선택 이유:
@@ -279,6 +280,27 @@ Wave Start
 - 과제 영상에서 게임 흐름이 명확히 보입니다.
 - 단순 샌드박스보다 시작/진행/클리어가 있어 완성도가 높아 보입니다.
 - `WaveData`로 적 수와 종류를 바꿀 수 있어 밸런스 조절이 쉽습니다.
+- 마지막 웨이브는 `Elite Skeleton` 미니보스를 배치해 일반 웨이브와 다른 마무리감을 만들었습니다.
+
+### Elite Skeleton Boss
+
+기존 적 구조를 버리지 않고 `EnemyBrainBase`, `MeleeChargerEnemy`, `Health`, `Hitbox`, `AttackData`를 재사용해 만든 미니보스입니다.
+
+구성:
+
+- `BossEnemy` 원본 프리팹
+- `BossSkeletonEnemy` 실제 출현 프리팹
+- `EliteBossAttack` 공격 데이터
+- 체력 50% 이하에서 2페이즈 진입
+- 2페이즈 진입 시 이동 속도 증가, 색상 변화, 카메라 흔들림
+- 일반 피격마다 모션이 끊기지 않고, 누적 데미지가 일정량 쌓였을 때만 짧은 Hit 경직 발생
+
+선택 이유:
+
+- 과제 범위 안에서 보스전을 과하게 새로 만들기보다, 이미 검증한 적/피격/웨이브 구조를 확장했습니다.
+- 마지막 웨이브가 단순 몹 정리로 끝나지 않고 제출 영상에서 클라이맥스처럼 보이게 했습니다.
+- 보스 패턴을 추가할 여지를 남기되, 현재 빌드 안정성을 우선했습니다.
+- 보스가 매 타격마다 Hurt 모션으로 끊기면 약해 보이므로, 데미지는 받되 누적 경직만 발생하도록 했습니다.
 
 ### ResultView
 
@@ -639,13 +661,17 @@ Focus Mode: Enemy/Projectile Slow, Burst Knockback, Invincible Startup
 - 원거리 적 투사체가 날아오는 순간에 포커스를 켜면 효과가 가장 잘 보입니다.
 - 포커스 발동 직후 스킬을 쓰면 전투 템포가 좋아 보입니다.
 
-### 7. 웨이브 클리어와 게임 클리어 - 15초
+### 7. 보스 웨이브와 게임 클리어 - 25초
 
 보여줄 것:
 
 - Wave 1 시작 카운트다운
 - `0 / 10` 진행도 갱신
 - Wave Clear
+- 마지막 웨이브 Boss Wave 표시
+- Elite Skeleton 등장
+- 보스 2페이즈 전환
+- 보스는 매 타격마다 경직되지 않고, 누적 데미지 조건에서만 Hit 반응
 - 마지막 웨이브 Clear
 - Clear UI
 - 다시하기/처음으로 버튼
@@ -653,8 +679,13 @@ Focus Mode: Enemy/Projectile Slow, Burst Knockback, Invincible Startup
 자막 예시:
 
 ```text
-Wave Progress / Wave Clear / Game Clear UI
+Boss Wave / Phase Change / Wave Clear / Game Clear UI
 ```
+
+촬영 포인트:
+
+- 보스는 평타 몇 번에 계속 멈추는 장면보다, 공격을 받아도 버티다가 일정 데미지 후 짧게 경직되는 장면이 좋습니다.
+- 2페이즈 색상 변화와 카메라 흔들림이 보이도록 체력을 절반 근처까지 깎은 뒤 컷을 이어 붙입니다.
 
 ### 영상 구성 추천
 
@@ -666,8 +697,9 @@ Wave Progress / Wave Clear / Game Clear UI
 00:55 Parry
 01:10 Breakable & Buff
 01:25 Focus Mode
-01:50 Wave Clear / Game Clear
-02:05 Code Structure Summary
+01:50 Boss Wave
+02:15 Wave Clear / Game Clear
+02:25 Code Structure Summary
 ```
 
 마지막 5~10초는 Unity 화면이 아니라 README 또는 코드 구조 화면을 잠깐 보여줘도 좋습니다.
@@ -719,11 +751,22 @@ Combat flow is separated into Input / Movement / Hitbox / Health / Feedback / UI
 `AttackData`, `SkillData`, `WaveData`를 ScriptableObject로 분리해 수치 조절과 확장이 쉽도록 했습니다.  
 새 스킬이나 적을 추가할 때 코드 수정량을 줄이는 것이 목적입니다.
 
+### 6. 보스는 일반 몹과 다른 피격 규칙 적용
+
+일반 몹은 타격감을 위해 맞을 때마다 짧게 Hit 모션이 나와도 괜찮지만, 보스가 매 타격마다 끊기면 전투가 너무 약하게 보입니다.  
+그래서 `EliteMeleeBossEnemy`는 데미지는 정상적으로 받되, 누적 데미지가 일정 기준을 넘고 쿨타임이 지났을 때만 Hit 경직을 재생합니다.
+
+의도:
+
+- 보스가 공격을 받으면서도 압박감을 유지합니다.
+- 플레이어 타격감은 데미지 텍스트, 사운드, 히트스톱으로 유지합니다.
+- 큰 누적 데미지 순간에는 경직이 나와서 플레이어가 성과를 느낄 수 있습니다.
+
 ## 현재 한계와 다음 개선 방향
 
 - 최종 아트 리소스가 확정되면 스킬 아이콘과 버프 아이콘을 실제 이미지로 교체해야 합니다.
-- 적 AI는 프로토타입 수준이며, 더 자연스러운 추적을 위해 간단한 플랫폼 경로 탐색을 추가할 수 있습니다.
-- 보스전이 없기 때문에, 과제 시간이 더 있으면 마지막 웨이브에 보스형 적을 추가하는 것이 좋습니다.
+- 적 AI는 현재 과제 영상용 추적/순찰 중심 구조이며, 더 자연스러운 추적을 위해 간단한 플랫폼 경로 탐색을 추가할 수 있습니다.
+- 보스전은 미니보스 형태로 구현되어 있으며, 시간이 더 있으면 장판/돌진/소환 같은 패턴을 추가해 보스 고유성을 높일 수 있습니다.
 - 사운드는 현재 파일명 기반 자동 로드 구조이며, 최종 단계에서는 AudioMixer로 볼륨 그룹을 분리할 수 있습니다.
 - README와 영상에서는 "AI 생성 리소스"보다 "전투 구조와 구현 의도"를 중심으로 설명하는 것이 좋습니다.
 
@@ -740,4 +783,3 @@ dotnet build Assembly-CSharp.csproj --no-restore
 
 - 컴파일 오류 없음
 - Unity MCP 관련 `System.Net.Http`, `System.IO.Compression` 참조 경고만 존재
-

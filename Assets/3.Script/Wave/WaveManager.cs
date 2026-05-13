@@ -54,7 +54,10 @@ public class WaveManager : Singleton<WaveManager>
             RespawnBreakableObjects();
             currentWaveTotal = CountWaveEnemies(wave);
             currentWaveKilled = 0;
-            WaveAnnounceUI.ShowWaveStartGlobal(currentWaveIndex, currentWaveTotal);
+            if (wave.isBossWave)
+                WaveAnnounceUI.ShowBossWaveStartGlobal(currentWaveIndex, currentWaveTotal, wave.bossName);
+            else
+                WaveAnnounceUI.ShowWaveStartGlobal(currentWaveIndex, currentWaveTotal);
             yield return new WaitForSecondsRealtime(waveIntroTime);
 
             for (int count = countdownStart; count > 0; count--)

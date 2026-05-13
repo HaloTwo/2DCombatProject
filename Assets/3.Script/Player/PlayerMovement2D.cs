@@ -38,6 +38,10 @@ public class PlayerMovement2D : Singleton<PlayerMovement2D>
     [SerializeField, KoreanLabel("피격 경직 시간")] private float hitStunDuration = 0.18f;
     [SerializeField, KoreanLabel("피격 무적 시간")] private float damageInvincibleDuration = 0.65f;
 
+    [Header("사운드")]
+    [SerializeField, KoreanLabel("발자국 간격")] private float footstepInterval = 0.18f;
+    [SerializeField, KoreanLabel("발자국 최소 이동 입력")] private float footstepMoveThreshold = 0.1f;
+
     [Header("충돌 보정")]
     [SerializeField, KoreanLabel("적 충돌 무시 갱신 반경")] private float enemyCollisionIgnoreRadius = 12f;
     [SerializeField, KoreanLabel("적 충돌 무시 갱신 주기")] private float enemyCollisionIgnoreInterval = 0.12f;
@@ -62,6 +66,7 @@ public class PlayerMovement2D : Singleton<PlayerMovement2D>
     private readonly List<ColliderPair> ignoredDashCollisions = new();
     private readonly Collider2D[] enemyIgnoreBuffer = new Collider2D[96];
     private float nextEnemyCollisionIgnoreTime;
+    private float nextFootstepTime;
 
     public float Facing => facing;
     public bool IsDashing => isDashing;
@@ -158,6 +163,7 @@ public class PlayerMovement2D : Singleton<PlayerMovement2D>
             moveX = 0f;
 
         rb.linearVelocity = new Vector2(moveX * moveSpeed * moveSpeedMultiplier, rb.linearVelocity.y);
+        PlayFootstepIfNeeded(moveX);
     }
 
     // 공격 모션 중 플레이어 입력을 잠그고, 공격 연출이 끊기지 않도록 현재 수평 속도를 정리한다.
@@ -637,9 +643,25 @@ public class PlayerMovement2D : Singleton<PlayerMovement2D>
         return targetHealth != null && targetHealth.Team == Team.Enemy;
     }
 
+    // 바닥에서 실제 이동 입력이 유지될 때 한 발자국 단위로 짧은 발소리를 낸다.
+    // 애니메이션 이벤트 없이도 프로토타입에서 이동감이 들리도록 간격 기반으로 처리한다.
+    private void PlayFootstepIfNeeded(float moveX)
+    {
+        if (!IsGrounded || Mathf.Abs(moveX) <= footstepMoveThreshold)
+            return;
+
+        if (Mathf.Abs(rb.linearVelocity.x) <= 0.05f || Time.time < nextFootstepTime)
+            return;
+
+        SoundManager.Instance?.PlayFootstep();
+        nextFootstepTime = Time.time + Mathf.Max(0.05f, footstepInterval);
+    }
+
     // 피격 직후에는 입력 경직과 무적 시간을 적용해 몸박/공격 중복 데미지를 막는다.
     private void HandleDamaged(Health damaged, DamageInfo info)
     {
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxPlayerHit, SFXType.PlayerHit);
+
         if (damageInvincibleDuration > 0f)
             damaged.SetInvincibleFor(damageInvincibleDuration);
 

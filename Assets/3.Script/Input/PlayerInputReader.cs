@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 public class PlayerInputReader : MonoBehaviour
 {
     [SerializeField] private float doubleTapDashWindow = 0.25f;
+    [SerializeField] private Health health;
 
     private InputAction moveAction;
     private InputAction jumpAction;
@@ -33,6 +34,9 @@ public class PlayerInputReader : MonoBehaviour
 
     private void Awake()
     {
+        if (health == null)
+            health = GetComponent<Health>();
+
         CreateActions();
     }
 
@@ -64,6 +68,12 @@ public class PlayerInputReader : MonoBehaviour
 
     private void Update()
     {
+        if (health != null && health.IsDead)
+        {
+            ClearInput();
+            return;
+        }
+
         Move = moveAction.ReadValue<Vector2>();
 
         JumpPressed = jumpAction.WasPressedThisFrame();
@@ -76,6 +86,22 @@ public class PlayerInputReader : MonoBehaviour
         BlockReleased = blockAction.WasReleasedThisFrame();
         InteractPressed = interactAction.WasPressedThisFrame();
         FocusPressed = focusAction.WasPressedThisFrame();
+    }
+
+    // 플레이어 사망 후에는 이동/공격/스킬/가드 입력이 다음 시스템으로 전달되지 않게 한 곳에서 비운다.
+    private void ClearInput()
+    {
+        Move = Vector2.zero;
+        JumpPressed = false;
+        DashPressed = false;
+        AttackPressed = false;
+        SkillOnePressed = false;
+        SkillTwoPressed = false;
+        BlockPressed = false;
+        BlockHeld = false;
+        BlockReleased = false;
+        InteractPressed = false;
+        FocusPressed = false;
     }
 
     // New Input System Action을 코드에서 구성해 키보드와 게임패드를 같은 입력 흐름으로 처리한다.

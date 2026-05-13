@@ -14,4 +14,9 @@ public class WaveData : ScriptableObject
 
     public List<SpawnEntry> enemies = new();
     public float nextWaveDelay = 2f;
+    [Header("Boss")]
+    [KoreanLabel("보스 웨이브")]
+    public bool isBossWave;
+    [KoreanLabel("보스 이름")]
+    public string bossName = "BOSS";
 }

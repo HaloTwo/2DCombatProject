@@ -109,7 +109,11 @@ public class Hitbox : MonoBehaviour
             hitTargets.Add(hurtbox.Health);
             OnHit?.Invoke(hurtbox.Health);
             OnAnyHit?.Invoke(hurtbox.Health, info);
+            return;
         }
+
+        if (hurtbox.ConsumeLastBlockedHit())
+            hitTargets.Add(hurtbox.Health);
     }
 
     public void ForceClose()

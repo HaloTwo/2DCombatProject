@@ -1,0 +1,173 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1835193225999131142
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 119711015400734301, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: maxHp
+      value: 280
+      objectReference: {fileID: 0}
+    - target: {fileID: 119711015400734301, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: invincibleTime
+      value: 0.08
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.25
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5983560179713724062, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6092808699094499222, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: meleeEnemy
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7439954532678875669, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_Name
+      value: BossEnemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 8387379952187272325, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 49b32ac3a3d8d964bac2213926d74cd2, type: 2}
+    - target: {fileID: 8710290201852392429, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 4723107735738678597, guid: 1018b0ba13578bf459bd254ae1a2be99, type: 3}
+    m_RemovedComponents:
+    - {fileID: 596257795951589280, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7439954532678875669, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8600812432565985802}
+  m_SourcePrefab: {fileID: 100100000, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+--- !u!50 &210285410702130561 stripped
+Rigidbody2D:
+  m_CorrespondingSourceObject: {fileID: 1989746556944342919, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+  m_PrefabInstance: {fileID: 1835193225999131142}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1792052275653958747 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 119711015400734301, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+  m_PrefabInstance: {fileID: 1835193225999131142}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9094999375221889043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52c633ecc9045584993137ddfbb0fc56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+--- !u!114 &3043197488234566014 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3696454162871268216, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+  m_PrefabInstance: {fileID: 1835193225999131142}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b45908cdd08101e45ae0911d21cc7694, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hitbox
+--- !u!95 &7859378542947815043 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 8387379952187272325, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+  m_PrefabInstance: {fileID: 1835193225999131142}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &9094999375221889043 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7439954532678875669, guid: 864fffd74458f6d41825e46eb5f39c2c, type: 3}
+  m_PrefabInstance: {fileID: 1835193225999131142}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8600812432565985802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9094999375221889043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8f675908b7a4d64aa045596b729e519, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EliteMeleeBossEnemy
+  rb: {fileID: 210285410702130561}
+  health: {fileID: 1792052275653958747}
+  animator: {fileID: 7859378542947815043}
+  playerTag: Player
+  detectRange: 7
+  attackRange: 0.75
+  moveSpeed: 1.35
+  patrolWhenIdle: 1
+  patrolSpeedMultiplier: 0.55
+  patrolWallCheckDistance: 0.18
+  patrolEdgeCheckForward: 0.72
+  patrolEdgeCheckDown: 1.25
+  patrolTurnCooldown: 1.2
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 0
+  jumpForce: 7
+  groundCheckDistance: 0.7
+  obstacleCheckDistance: 0.45
+  targetHeightJumpThreshold: 0.55
+  chaseMaxHeightDifference: 1.1
+  minPlatformJumpHeight: 1.1
+  jumpCooldown: 0.65
+  blockedStopTime: 0.2
+  chaseStopXDistance: 0.12
+  attackHitbox: {fileID: 3043197488234566014}
+  attackData: {fileID: 11400000, guid: 9188a404db5840d4978c777142452cee, type: 2}
+  attackCooldown: 1.55
+  attackStateDuration: 0.75
+  phaseTwoHpRatio: 0.5
+  phaseTwoSpeedMultiplier: 1.3
+  phaseTwoColor: {r: 1, g: 0.38, b: 0.38, a: 1}
+  shakeOnSpawn: 1

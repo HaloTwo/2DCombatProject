@@ -5,13 +5,9 @@ public class Hurtbox : MonoBehaviour
     [SerializeField] private Health health;
     [SerializeField] private PlayerGuard guard;
 
-    public Health Health => health;
+    private bool lastHitBlocked;
 
-    private void Reset()
-    {
-        health = GetComponentInParent<Health>();
-        guard = GetComponentInParent<PlayerGuard>();
-    }
+    public Health Health => health;
 
     private void Awake()
     {
@@ -21,13 +17,25 @@ public class Hurtbox : MonoBehaviour
 
     public bool ApplyDamage(DamageInfo info, Component attacker = null)
     {
+        lastHitBlocked = false;
+
         if (health == null) return false;
         if (guard != null && attacker != null && guard.TryParry(info, attacker))
+        {
+            lastHitBlocked = true;
             return false;
+        }
 
         if (guard != null)
             info = guard.ReduceGuardDamage(info);
 
         return health.TakeDamage(info);
+    }
+
+    public bool ConsumeLastBlockedHit()
+    {
+        bool blocked = lastHitBlocked;
+        lastHitBlocked = false;
+        return blocked;
     }
 }

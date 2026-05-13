@@ -8,11 +8,11 @@ public class PlayerGuard : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Animator animator;
     [SerializeField] private GameObject parryEffectPrefab;
-    [SerializeField] private string guardTriggerName = "Hurt";
+    readonly string guardFallbackTriggerName = "Block";
 
     [Header("Timing")]
     [SerializeField] private float parryWindow = 0.16f;
-    [SerializeField] private float guardDamageRate = 0.25f;
+    [SerializeField] private float guardDamageRate = 0.5f;
     [SerializeField] private float parryHitStop = 0.07f;
     [SerializeField] private float parryKnockback = 9f;
     [SerializeField, KoreanLabel("패링 시작 정지 시간")] private float parryStartLockTime = 0.12f;
@@ -51,29 +51,29 @@ public class PlayerGuard : MonoBehaviour
     {
         parryEndTime = Time.time + parryWindow;
         movement?.LockMovementFor(parryStartLockTime);
-
-        if (animator != null)
-            animator.SetTrigger(guardTriggerName);
+        SetAnimatorTrigger(guardFallbackTriggerName);
     }
 
-    // Hurtbox가 데미지 적용 직전에 호출한다. 성공하면 데미지는 취소되고 공격자에게 반격 연출을 보낸다.
+    // Hurtbox가 데미지 적용 직전에 호출한다. 패링 성공 시 데미지는 막고, 투사체만 반사한다.
+    // 근접 공격은 적 모션을 끊지 않고 해당 히트만 소비해서 보스/일반몹 공격 흐름을 유지한다.
     public bool TryParry(DamageInfo info, Component attacker)
     {
-        if (!IsParryWindow || attacker == null)
+        if (!IsParryWindow)
             return false;
 
         Vector2 point = info.HitPoint;
-        Vector2 direction = ((Vector2)attacker.transform.position - (Vector2)transform.position).normalized;
+        Vector2 attackerPosition = attacker != null ? attacker.transform.position : transform.position + transform.right;
+        Vector2 direction = (attackerPosition - (Vector2)transform.position).normalized;
         if (direction.sqrMagnitude < 0.01f)
             direction = transform.localScale.x >= 0f ? Vector2.right : Vector2.left;
 
         SpawnParryEffect(point);
-        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxGuard, SFXType.Guard);
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxGuardParry, SFXType.Guard);
         CameraShake.ShakeDefault();
         StartParryHitStop();
 
-        if (attacker.TryGetComponent(out IParryReactable reactable))
-            reactable.OnParried(point, direction);
+        if (attacker != null && attacker.TryGetComponent(out Projectile projectile))
+            projectile.OnParried(point, direction);
 
         if (rb != null)
             rb.linearVelocity = new Vector2(-direction.x * Mathf.Max(1.5f, parryKnockback * 0.16f), rb.linearVelocity.y);
@@ -89,7 +89,38 @@ public class PlayerGuard : MonoBehaviour
         if (!IsGuarding)
             return info;
 
+        SoundManager.Instance?.PlayNamedSFX(SoundManager.SfxGuardBlock, SFXType.Guard);
         return new DamageInfo(info.AttackerTeam, info.Damage * guardDamageRate, info.HitPoint, info.Knockback * 0.35f, info.HitStopTime);
+    }
+
+    private void SetAnimatorTrigger(string triggerName)
+    {
+        if (animator == null)
+            return;
+
+        if (HasTrigger(triggerName))
+        {
+            animator.SetTrigger(triggerName);
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(guardFallbackTriggerName) && HasTrigger(guardFallbackTriggerName))
+            animator.SetTrigger(guardFallbackTriggerName);
+    }
+
+    private bool HasTrigger(string triggerName)
+    {
+        if (string.IsNullOrEmpty(triggerName))
+            return false;
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            if (parameters[i].name == triggerName && parameters[i].type == AnimatorControllerParameterType.Trigger)
+                return true;
+        }
+
+        return false;
     }
 
     private void SpawnParryEffect(Vector2 point)

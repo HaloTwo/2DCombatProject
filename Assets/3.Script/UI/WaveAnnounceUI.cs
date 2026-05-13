@@ -42,6 +42,16 @@ public class WaveAnnounceUI : Singleton<WaveAnnounceUI>
         PlayPop();
     }
 
+    public void ShowBossWaveStart(int waveIndex, int totalEnemies, string bossName)
+    {
+        EnsureRefs();
+        SetVisible(true);
+        string label = string.IsNullOrWhiteSpace(bossName) ? "BOSS" : bossName;
+        SetTexts("BOSS WAVE", label, $"0 / {Mathf.Max(0, totalEnemies)}", clearColor);
+        PlayPop();
+        CameraShake.ShakeDefault();
+    }
+
     public void ShowCountdown(int count, int waveIndex)
     {
         EnsureRefs();
@@ -76,6 +86,11 @@ public class WaveAnnounceUI : Singleton<WaveAnnounceUI>
     public static void ShowWaveStartGlobal(int waveIndex, int totalEnemies)
     {
         EnsureInstance()?.ShowWaveStart(waveIndex, totalEnemies);
+    }
+
+    public static void ShowBossWaveStartGlobal(int waveIndex, int totalEnemies, string bossName)
+    {
+        EnsureInstance()?.ShowBossWaveStart(waveIndex, totalEnemies, bossName);
     }
 
     public static void ShowCountdownGlobal(int count, int waveIndex)

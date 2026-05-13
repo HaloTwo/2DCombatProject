@@ -11,8 +11,6 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
     [SerializeField] private PlayerMovement2D movement;
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Health health;
-    [SerializeField] private bool useNoBloodDeath;
-    [SerializeField] private string damagedTriggerName = "Block";
 
     [Header("Dash Effect")]
     [SerializeField] private Color dashGhostColor = new Color(0.55f, 0.85f, 1f, 0.48f);
@@ -136,13 +134,12 @@ public class PlayerHeroKnightAnimator : MonoBehaviour
         if (isDead)
             return;
 
-        SetTrigger(damagedTriggerName);
+        SetTrigger("Hurt");
     }
 
     private void HandleDead(Health target)
     {
         isDead = true;
-        SetBool("noBlood", useNoBloodDeath);
         SetTrigger("Death");
     }
 

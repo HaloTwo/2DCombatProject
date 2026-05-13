@@ -6,6 +6,8 @@ public class MeleeChargerEnemy : EnemyBrainBase
     [SerializeField] private AttackData attackData;
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private float attackStateDuration = 0.55f;
+    [SerializeField, KoreanLabel("근접 공격 시작 X 보정")] private float attackStartXPadding = 0.28f;
+    [SerializeField, KoreanLabel("근접 공격 Y 허용치")] private float attackStartYTolerance = 0.85f;
 
     private float nextAttackTime;
     private float attackEndTime;
@@ -55,7 +57,17 @@ public class MeleeChargerEnemy : EnemyBrainBase
         if (target == null)
             return false;
 
-        return IsTargetInsideAttackHitbox(attackHitbox) || IsTargetInAttackRange();
+        return IsTargetInsideAttackHitbox(attackHitbox) || IsTargetInMeleeStartRange();
+    }
+
+    // 근접 몬스터는 콜라이더 중심이 조금 어긋나도 공격을 시작해야 한다.
+    // 원형 거리만 쓰면 보스처럼 큰 프리팹에서 플레이어가 살짝 위/아래에 있을 때 공격이 빠질 수 있다.
+    private bool IsTargetInMeleeStartRange()
+    {
+        Vector2 delta = (Vector2)target.position - (Vector2)transform.position;
+        float xRange = Mathf.Max(attackRange, 0.1f) + Mathf.Max(0f, attackStartXPadding);
+        float yRange = Mathf.Max(0.1f, attackStartYTolerance);
+        return Mathf.Abs(delta.x) <= xRange && Mathf.Abs(delta.y) <= yRange;
     }
 
     private void TryAttack()
