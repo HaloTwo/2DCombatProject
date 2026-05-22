@@ -13,12 +13,10 @@
 • 개발 환경: Unity 6, C#  
 • 주요 기술: New Input System, Animation Event Hitbox, ScriptableObject, Object Pool, UGUI
 
-## 조작법
 =======
 ## 🎥 동영상
 
-<!-- TODO: 영상 링크 추가 -->
-<!-- 예시: [![영상 미리보기](https://img.youtube.com/vi/영상ID/0.jpg)](https://youtu.be/영상ID) -->
+[![영상 미리보기](https://youtu.be/WMT9xRD1Y8A/0.jpg)](https://youtu.be/WMT9xRD1Y8A) 
 
 ## 📑 목차
 
